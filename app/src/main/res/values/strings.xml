@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MDP Remote</string>
+
+    <string name="section_connection">Bluetooth</string>
+    <string name="section_status">Robot status</string>
+    <string name="section_movement">Movement</string>
+    <string name="section_obstacle">Selected obstacle</string>
+    <string name="section_arena">Arena</string>
+    <string name="section_serial">Serial</string>
+    <string name="section_log">Raw traffic</string>
+
+    <string name="connect">Connect</string>
+    <string name="listen">Reconnect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="scan">Scan</string>
+    <string name="scanning">Scanning…</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="reset">Reset</string>
+    <string name="apply">Apply</string>
+    <string name="clear">Clear</string>
+    <string name="send">Send</string>
+
+    <string name="select_device">Select a device</string>
+    <string name="no_devices">No devices yet. Pair the robot in Android settings, or tap Scan.</string>
+    <string name="unnamed_device">Unnamed device</string>
+    <string name="no_device">No device selected</string>
+
+    <string name="state_disconnected">DISCONNECTED</string>
+    <string name="state_connecting">CONNECTING…</string>
+    <string name="state_reconnecting">RECONNECTING…</string>
+    <string name="state_connected">CONNECTED</string>
+
+    <string name="status_ready">Ready</string>
+    <string name="robot_pose_placeholder">Robot (1, 1) facing N</string>
+    <string name="robot_pose">Robot (%1$d, %2$d) facing %3$s</string>
+
+    <string name="cmd_forward">Forward</string>
+    <string name="cmd_reverse">Reverse</string>
+    <string name="cmd_turn_left">Turn left</string>
+    <string name="cmd_turn_right">Turn right</string>
+    <string name="cmd_reverse_left">Rev. left</string>
+    <string name="cmd_reverse_right">Rev. right</string>
+    <string name="cmd_stop">Stop</string>
+
+    <string name="no_obstacle_selected">Tap an obstacle to select it</string>
+    <string name="obstacle_summary">Obstacle %1$d at (%2$d, %3$d) — face %4$s</string>
+    <string name="face_unset">not set</string>
+    <string name="face_n">N</string>
+    <string name="face_e">E</string>
+    <string name="face_s">S</string>
+    <string name="face_w">W</string>
+    <string name="face_none">None</string>
+    <string name="face_option">%1$s (%2$s)</string>
+    <string name="face_clear">Clear annotation</string>
+    <string name="face_dialog_title">Target face of obstacle %1$d</string>
+
+    <string name="send_map">Send all</string>
+    <string name="clear_map">Clear map</string>
+    <string name="start_image">Image rec.</string>
+    <string name="start_fastest">Fastest path</string>
+    <string name="message_hint">Text to send</string>
+    <string name="log_empty">Nothing received yet.</string>
+
+    <string name="menu_settings">Movement commands</string>
+    <string name="menu_arena">Arena size</string>
+    <string name="settings_commands">Movement commands</string>
+    <string name="settings_arena">Arena size</string>
+    <string name="settings_arena_warning">Changing the grid size clears the current map.</string>
+    <string name="columns">Columns (x)</string>
+    <string name="rows">Rows (y)</string>
+
+    <string name="permissions_required">Bluetooth permissions are required to connect to the robot.</string>
+    <string name="bluetooth_unsupported">This device has no Bluetooth adapter.</string>
+    <string name="enable_bluetooth">Please turn Bluetooth on first.</string>
+    <string name="cell_occupied">That cell already has an obstacle.</string>
+</resources>
