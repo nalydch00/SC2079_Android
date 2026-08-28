@@ -57,11 +57,7 @@
     <string name="face_e">E</string>
     <string name="face_s">S</string>
     <string name="face_w">W</string>
-    <string name="face_none">None</string>
     <string name="face_clear_symbol">✕</string>
-    <string name="face_option">%1$s (%2$s)</string>
-    <string name="face_clear">Clear annotation</string>
-    <string name="face_dialog_title">Target face of obstacle %1$d</string>
 
     <string name="send_map">Send all</string>
     <string name="clear_map">Clear map</string>

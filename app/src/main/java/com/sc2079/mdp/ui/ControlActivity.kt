@@ -263,11 +263,6 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
         viewModel.select(obstacle?.id)
     }
 
-    override fun onObstacleLongPressed(obstacle: Obstacle) {
-        viewModel.select(obstacle.id)
-        FacePickerDialog.show(this, obstacle) { face -> onTargetFaceChanged(obstacle.id, face) }
-    }
-
     override fun onRobotMoved(x: Int, y: Int) {
         viewModel.moveRobot(x, y)
     }

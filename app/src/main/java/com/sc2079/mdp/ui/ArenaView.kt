@@ -26,8 +26,11 @@ import kotlin.math.min
  *  - tap an empty cell to add the next numbered obstacle (C.6)
  *  - drag an obstacle to move it, or drag it off the arena to delete it (C.6)
  *  - tap one of the four edges of an obstacle to annotate the target face, and
- *    the middle of the block to clear it (C.7); a long press opens the larger
- *    face picker for when the blocks are small
+ *    the middle of the block to clear it (C.7)
+ *  - press and hold an obstacle to light up four N/E/S/W zones around it, then
+ *    slide onto one and lift to pick that face - without lifting, so it reads
+ *    as one continuous gesture, useful when the block itself is too small to
+ *    touch an edge of reliably (C.7's own suggested fallback)
  *  - drag the robot to reposition it, long press an empty cell to drop it there
  *
  * The view never mutates the arena itself. It reports intent through
@@ -47,7 +50,6 @@ class ArenaView @JvmOverloads constructor(
         fun onObstacleRemoved(id: Int)
         fun onTargetFaceChanged(id: Int, face: Direction?)
         fun onObstacleSelected(obstacle: Obstacle?)
-        fun onObstacleLongPressed(obstacle: Obstacle)
         fun onRobotMoved(x: Int, y: Int)
     }
 
@@ -110,6 +112,12 @@ class ArenaView @JvmOverloads constructor(
         style = Paint.Style.FILL
         color = COLOR_ROBOT_HEAD
     }
+    private val facePickerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val facePickerTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        textAlign = Paint.Align.CENTER
+        isFakeBoldText = true
+    }
 
     private var cellSize = 0f
     private var gutter = 0f
@@ -129,6 +137,17 @@ class ArenaView @JvmOverloads constructor(
     private var dragCellX = 0
     private var dragCellY = 0
     private var dragOutside = false
+
+    /**
+     * Set once a long press on an obstacle fires, and cleared on lift/cancel.
+     * While non-null, [handleMove] tracks which of the four lit zones the
+     * finger is over instead of dragging, and [handleUp] commits whichever
+     * zone (if any) it last landed on.
+     */
+    private var facePickObstacleId: Int? = null
+    private var facePickHoverDirection: Direction? = null
+    private var facePickCenterX = 0f
+    private var facePickCenterY = 0f
 
     private val longPressRunnable = Runnable { fireLongPress() }
 
@@ -179,6 +198,7 @@ class ArenaView @JvmOverloads constructor(
         }
         drawDragPreview(canvas)
         canvas.drawRect(gridLeft, gridTop, gridRight, gridBottom, borderPaint)
+        if (facePickObstacleId != null) drawFacePicker(canvas)
     }
 
     private fun drawGrid(canvas: Canvas, gridRight: Float, gridBottom: Float) {
@@ -302,6 +322,50 @@ class ArenaView @JvmOverloads constructor(
         }
     }
 
+    /**
+     * The four lit N/E/S/W zones shown while [facePickObstacleId] is set - a
+     * finger held down after a long press can slide onto one of these without
+     * lifting, previewed with [facePickHoverDirection] before it is committed.
+     */
+    private fun drawFacePicker(canvas: Canvas) {
+        val near = cellSize * PICKER_NEAR_FRACTION
+        val far = cellSize * PICKER_FAR_FRACTION
+        val half = cellSize * PICKER_WIDTH_FRACTION / 2f
+        val cx = facePickCenterX
+        val cy = facePickCenterY
+        val corner = 8f * density
+
+        Direction.entries.forEach { direction ->
+            val hovered = direction == facePickHoverDirection
+            facePickerPaint.color = if (hovered) COLOR_PICKER_HOVER else COLOR_PICKER_IDLE
+            when (direction) {
+                Direction.NORTH -> cellRect.set(cx - half, cy - far, cx + half, cy - near)
+                Direction.SOUTH -> cellRect.set(cx - half, cy + near, cx + half, cy + far)
+                Direction.EAST -> cellRect.set(cx + near, cy - half, cx + far, cy + half)
+                Direction.WEST -> cellRect.set(cx - far, cy - half, cx - near, cy + half)
+            }
+            canvas.drawRoundRect(cellRect, corner, corner, facePickerPaint)
+            facePickerTextPaint.textSize = half * 0.9f
+            canvas.drawText(
+                direction.code,
+                cellRect.centerX(),
+                cellRect.centerY() + facePickerTextPaint.textSize * 0.35f,
+                facePickerTextPaint,
+            )
+        }
+    }
+
+    /** Dominant-axis hit test for [drawFacePicker]'s zones, in raw pixels. */
+    private fun hoverDirectionFor(dx: Float, dy: Float): Direction? {
+        val deadZone = cellSize * PICKER_NEAR_FRACTION
+        if (abs(dx) < deadZone && abs(dy) < deadZone) return null
+        return if (abs(dx) > abs(dy)) {
+            if (dx > 0f) Direction.EAST else Direction.WEST
+        } else {
+            if (dy > 0f) Direction.SOUTH else Direction.NORTH
+        }
+    }
+
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (cellSize <= 0f) return false
         when (event.actionMasked) {
@@ -322,6 +386,8 @@ class ArenaView @JvmOverloads constructor(
         dragOutside = false
         dragObstacleId = null
         dragRobot = false
+        facePickObstacleId = null
+        facePickHoverDirection = null
 
         val x = columnAt(event.x)
         val y = rowAt(event.y)
@@ -340,6 +406,11 @@ class ArenaView @JvmOverloads constructor(
     }
 
     private fun handleMove(event: MotionEvent) {
+        if (facePickObstacleId != null) {
+            facePickHoverDirection = hoverDirectionFor(event.x - facePickCenterX, event.y - facePickCenterY)
+            invalidate()
+            return
+        }
         if (gestureConsumed) return
         if (!dragging && abs(event.x - downX) < touchSlop && abs(event.y - downY) < touchSlop) return
 
@@ -366,6 +437,12 @@ class ArenaView @JvmOverloads constructor(
 
     private fun handleUp(event: MotionEvent) {
         removeCallbacks(longPressRunnable)
+        val pickedObstacleId = facePickObstacleId
+        if (pickedObstacleId != null) {
+            facePickHoverDirection?.let { listener?.onTargetFaceChanged(pickedObstacleId, it) }
+            resetGesture()
+            return
+        }
         if (gestureConsumed) {
             resetGesture()
             return
@@ -401,8 +478,14 @@ class ArenaView @JvmOverloads constructor(
     private fun fireLongPress() {
         gestureConsumed = true
         val id = dragObstacleId
-        if (id != null) {
-            arena.obstacleById(id)?.let { listener?.onObstacleLongPressed(it) }
+        val obstacle = id?.let { arena.obstacleById(it) }
+        if (id != null && obstacle != null) {
+            listener?.onObstacleSelected(obstacle)
+            facePickObstacleId = id
+            facePickHoverDirection = null
+            facePickCenterX = gridLeft + obstacle.x * cellSize + cellSize / 2f
+            facePickCenterY = gridTop + (arena.rows - 1 - obstacle.y) * cellSize + cellSize / 2f
+            invalidate()
             return
         }
         val x = columnAt(downX)
@@ -417,6 +500,8 @@ class ArenaView @JvmOverloads constructor(
         dragging = false
         dragOutside = false
         gestureConsumed = false
+        facePickObstacleId = null
+        facePickHoverDirection = null
         invalidate()
     }
 
@@ -437,6 +522,12 @@ class ArenaView @JvmOverloads constructor(
 
     private companion object {
         const val LONG_PRESS_MS = 450L
+
+        /** Where the lit N/E/S/W zones sit, as a fraction of one cell's size. */
+        const val PICKER_NEAR_FRACTION = 0.65f
+        const val PICKER_FAR_FRACTION = 1.35f
+        const val PICKER_WIDTH_FRACTION = 0.8f
+
         val COLOR_ARENA = Color.parseColor("#BFE7F7")
         val COLOR_GRID = Color.parseColor("#FFFFFF")
         val COLOR_BORDER = Color.parseColor("#37474F")
@@ -448,5 +539,7 @@ class ArenaView @JvmOverloads constructor(
         val COLOR_SELECTION = Color.parseColor("#FFC107")
         val COLOR_ROBOT = Color.parseColor("#F0A44C")
         val COLOR_ROBOT_HEAD = Color.parseColor("#37687F")
+        val COLOR_PICKER_IDLE = Color.parseColor("#99F0A44C")
+        val COLOR_PICKER_HOVER = Color.parseColor("#FFFFC107")
     }
 }

@@ -9,31 +9,7 @@ import androidx.appcompat.app.AlertDialog
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.sc2079.mdp.R
-import com.sc2079.mdp.model.Direction
-import com.sc2079.mdp.model.Obstacle
 import com.sc2079.mdp.util.Prefs
-
-/**
- * The larger face picker used when an obstacle block is too small to touch one
- * of its four edges reliably (checklist C.7 explicitly allows an alternative
- * touch-based technique).
- */
-object FacePickerDialog {
-
-    fun show(context: Context, obstacle: Obstacle, onPicked: (Direction?) -> Unit) {
-        val faces = Direction.entries.toTypedArray()
-        val labels = faces.map { context.getString(R.string.face_option, it.name, it.code) }
-            .toMutableList()
-        labels += context.getString(R.string.face_clear)
-        AlertDialog.Builder(context)
-            .setTitle(context.getString(R.string.face_dialog_title, obstacle.id))
-            .setItems(labels.toTypedArray()) { _, which ->
-                onPicked(faces.getOrNull(which))
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-    }
-}
 
 /**
  * Lets the team retune the movement command strings without a rebuild, which is

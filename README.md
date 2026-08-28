@@ -50,11 +50,11 @@ each step:
 |---|---|---|
 | **C.1** | Transmit and receive text over the Bluetooth serial link | `bluetooth/BluetoothController.kt`; the *Serial* box in the control panel sends free text, and everything received appears in the *Raw traffic* log |
 | **C.2** | GUI scanning, selection and connection | The **Connect** screen (`ui/ConnectionActivity.kt`) → `bluetooth/DeviceListDialogFragment.kt` (paired devices listed immediately, **Scan** appends discovered ones) |
-| **C.3** | Interactive control of robot movement | A 3×3 arrow D-pad on the Control screen — turn left/forward/turn right on top, reverse-left/reverse/reverse-right on the bottom, Stop in the centre |
+| **C.3** | Interactive control of robot movement | A TV-remote style arrow D-pad on the Control screen: Forward/Stop/Reverse down the centre, Turn left/right and Reverse left/right filling the full height on either side (no dead space) - six directions including diagonals, plus Stop |
 | **C.4** | Remote update & status messages | The bold **Robot status** box. It shows only recognised status/robot/target events; unrecognised traffic goes to the separate raw log |
 | **C.5** | 2D arena display with numbered obstacles and the robot | `ui/ArenaView.kt` — 20 × 20 grid with axis labels, obstacle numbers in small white text, robot drawn over its 3 × 3 footprint with a direction arrow |
 | **C.6** | Interactive placement and movement of obstacles | Tap an empty cell to add; drag to move; drag off the arena to delete. `ADD` / `SUB` transmitted when the finger lifts |
-| **C.7** | Annotate the obstacle face carrying the target | Tap an edge of an obstacle to set that face (middle clears it); or long-press it for the face picker dialog; or use the N/E/S/W buttons arranged in a compass cross under *Selected obstacle*, so each button sits where its direction actually points. `FACE` transmitted each time |
+| **C.7** | Annotate the obstacle face carrying the target | Tap an edge of an obstacle to set that face (middle clears it); or press and hold it to light up four N/E/S/W zones around it, then slide onto one without lifting and release to pick it - a bigger, friendlier target than the edge itself for small blocks; or use the N/E/S/W buttons arranged in a compass cross under *Selected obstacle*. `FACE` transmitted each time |
 | **C.8** | Robust connectivity, automatic re-establishment | `BluetoothController` runs a retrying client loop **and** an RFCOMM server socket at the same time, so the link comes back whether the tablet or the robot re-initiates |
 | **C.9** | Display image target ID on obstacle blocks | `TARGET,...` repaints the block green with the target ID in large white text, plus a thick red bar on the target face |
 | **C.10** | Update robot position and facing direction | `ROBOT,<x>,<y>,<dir>` moves and rotates the robot icon |
@@ -100,7 +100,7 @@ without a rebuild.
 | Drag an obstacle | Move it; drop it outside the arena to delete it |
 | Tap an obstacle's edge | Set that face as the target face |
 | Tap an obstacle's middle | Clear its target face |
-| Long-press an obstacle | Open the face picker dialog |
+| Press and hold an obstacle, then slide onto a lit zone and release | Set the target face to whichever zone (N/E/S/W) you released on |
 | Drag the robot | Reposition the robot |
 | Long-press an empty cell | Drop the robot there |
 
