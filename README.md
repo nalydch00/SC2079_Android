@@ -13,14 +13,29 @@ The app is two screens, kept deliberately separate for a focused interface at
 each step:
 
 1. **Connect** (`ui/ConnectionActivity.kt`, launcher) — a plain screen whose only
-   job is getting a Bluetooth link up. It hands off automatically the moment
-   the link connects.
-2. **Control** (`ui/ControlActivity.kt`) — the arena map and controls, reached
-   only once connected. Designed for landscape (how the tablet is normally
-   mounted during a run), though portrait still works. A link drop here shows
-   "Reconnecting…" in the toolbar without leaving the screen — `BluetoothController`
-   keeps retrying in the background (checklist C.8) — and **Disconnect** in the
-   overflow menu is the explicit way back to the Connect screen.
+   job is getting a Bluetooth link up: status, Connect, Reconnect, nothing else.
+   It hands off automatically the moment the link connects. Has its own
+   landscape layout (side-by-side instead of stacked) so nothing gets clipped
+   on a wide, short tablet screen.
+2. **Control** (`ui/ControlActivity.kt`) — the arena map plus a tabbed control
+   panel, reached only once connected. Designed for landscape (how the tablet
+   is normally mounted during a run), though portrait still works. A link drop
+   here shows "Reconnecting…" in the toolbar without leaving the screen —
+   `BluetoothController` keeps retrying in the background (checklist C.8) — and
+   **Disconnect** in the overflow menu is the explicit way back to the Connect
+   screen.
+
+   The panel is three fixed tabs instead of one long scrolling list, so nothing
+   needs to be scrolled to reach:
+   - **Control** — robot status plus the movement D-pad; what you touch while
+     actually driving.
+   - **Obstacles** — target-face annotation plus map-wide actions (Send all,
+     Clear map, …); used while setting the arena up.
+   - **Log** — free-text send plus the raw traffic log; for proving connectivity
+     with the AMD tool.
+
+   The arena map itself is not part of the panel and stays visible regardless
+   of which tab is selected.
 
 | | |
 |---|---|

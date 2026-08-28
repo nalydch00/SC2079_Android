@@ -58,7 +58,6 @@ class ConnectionActivity : AppCompatActivity(), DeviceListDialogFragment.DeviceC
 
         binding.connectButton.setOnClickListener { requestConnect() }
         binding.listenButton.setOnClickListener { reconnectToLastDevice() }
-        binding.disconnectButton.setOnClickListener { bluetooth.disconnect() }
 
         observeState()
     }

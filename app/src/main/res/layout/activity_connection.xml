@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Deliberately the only thing on this screen: get a Bluetooth link up.
      Robot control lives on ControlActivity, opened automatically once
-     connected (checklist C.2). -->
+     connected (checklist C.2). No Disconnect here - before a link exists
+     there is nothing to disconnect from; that action lives on the Control
+     screen's overflow menu once connected. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -69,14 +71,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:text="@string/listen" />
-
-    <Button
-        android:id="@+id/disconnect_button"
-        style="@style/Widget.Material3.Button.TextButton"
-        android:layout_width="280dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="@string/disconnect" />
 
     <TextView
         android:layout_width="280dp"

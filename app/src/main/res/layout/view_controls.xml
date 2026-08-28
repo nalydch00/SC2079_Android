@@ -1,332 +1,392 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Tabbed instead of scrolling: each tab's content is kept short enough to
+     fit on screen without a scroll, per feedback. Tab 1 is what you touch
+     constantly while driving; tab 2 is map/obstacle setup; tab 3 is the
+     debugging/AMD-tool tab. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/panel_background"
-    android:fillViewport="true">
+    android:orientation="vertical">
 
-    <LinearLayout
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="12dp">
+        android:background="@color/primary"
+        app:tabGravity="fill"
+        app:tabIndicatorColor="@color/secondary"
+        app:tabIndicatorHeight="3dp"
+        app:tabMode="fixed"
+        app:tabSelectedTextColor="@android:color/white"
+        app:tabTextColor="#B3FFFFFF">
 
-        <!-- Status / remote update messages (C.4) -->
-        <TextView
-            style="@style/SectionHeader"
-            android:text="@string/section_status" />
-
-        <TextView
-            android:id="@+id/status_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_status"
-            android:minHeight="56dp"
-            android:padding="12dp"
-            android:text="@string/status_ready"
-            android:textColor="@color/text_primary"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/robot_pose"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="6dp"
-            android:text="@string/robot_pose_placeholder"
-            android:textSize="14sp"
-            android:textStyle="bold" />
-
-        <!-- Movement control (C.3): a 3x3 arrow D-pad instead of labelled text
-             buttons. Row 1 = turn-left / forward / turn-right, row 3 = reverse
-             variants, Stop sits in the centre where it is always reachable
-             without hunting across the panel. -->
-        <TextView
-            style="@style/SectionHeader"
-            android:text="@string/section_movement" />
-
-        <GridLayout
+        <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="8dp"
-            android:columnCount="3"
-            android:rowCount="3"
-            android:useDefaultMargins="false">
+            android:text="@string/tab_control" />
 
-            <ImageButton
-                android:id="@+id/btn_turn_left"
-                style="@style/DpadButton"
-                android:layout_row="0"
-                android:layout_column="0"
-                android:contentDescription="@string/cmd_turn_left"
-                android:rotation="0"
-                android:src="@drawable/ic_dir_turn" />
-
-            <ImageButton
-                android:id="@+id/btn_forward"
-                style="@style/DpadButton"
-                android:layout_row="0"
-                android:layout_column="1"
-                android:contentDescription="@string/cmd_forward"
-                android:rotation="0"
-                android:src="@drawable/ic_dir_arrow" />
-
-            <ImageButton
-                android:id="@+id/btn_turn_right"
-                style="@style/DpadButton"
-                android:layout_row="0"
-                android:layout_column="2"
-                android:contentDescription="@string/cmd_turn_right"
-                android:scaleX="-1"
-                android:src="@drawable/ic_dir_turn" />
-
-            <View
-                android:layout_row="1"
-                android:layout_column="0"
-                android:layout_width="64dp"
-                android:layout_height="64dp" />
-
-            <ImageButton
-                android:id="@+id/btn_stop"
-                style="@style/DpadStopButton"
-                android:layout_row="1"
-                android:layout_column="1"
-                android:contentDescription="@string/cmd_stop"
-                android:src="@drawable/ic_stop" />
-
-            <View
-                android:layout_row="1"
-                android:layout_column="2"
-                android:layout_width="64dp"
-                android:layout_height="64dp" />
-
-            <ImageButton
-                android:id="@+id/btn_reverse_left"
-                style="@style/DpadButton"
-                android:layout_row="2"
-                android:layout_column="0"
-                android:contentDescription="@string/cmd_reverse_left"
-                android:rotation="225"
-                android:src="@drawable/ic_dir_arrow" />
-
-            <ImageButton
-                android:id="@+id/btn_reverse"
-                style="@style/DpadButton"
-                android:layout_row="2"
-                android:layout_column="1"
-                android:contentDescription="@string/cmd_reverse"
-                android:rotation="180"
-                android:src="@drawable/ic_dir_arrow" />
-
-            <ImageButton
-                android:id="@+id/btn_reverse_right"
-                style="@style/DpadButton"
-                android:layout_row="2"
-                android:layout_column="2"
-                android:contentDescription="@string/cmd_reverse_right"
-                android:rotation="135"
-                android:src="@drawable/ic_dir_arrow" />
-        </GridLayout>
-
-        <!-- Selected obstacle: target face annotation (C.7) -->
-        <TextView
-            style="@style/SectionHeader"
-            android:text="@string/section_obstacle" />
-
-        <TextView
-            android:id="@+id/selected_obstacle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/no_obstacle_selected"
-            android:textSize="14sp" />
-
-        <!-- Compass cross so each button sits where its direction actually
-             points (N above, S below, E right, W left), rather than a row that
-             reads left-to-right regardless of meaning. Centre button mirrors
-             the map gesture: tapping the middle of an obstacle clears its face. -->
-        <GridLayout
+        <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="8dp"
-            android:columnCount="3"
-            android:rowCount="3"
-            android:useDefaultMargins="false">
+            android:text="@string/tab_obstacles" />
 
-            <View
-                android:layout_row="0"
-                android:layout_column="0"
-                android:layout_width="48dp"
-                android:layout_height="48dp" />
-
-            <Button
-                android:id="@+id/face_n"
-                style="@style/CompassButton"
-                android:layout_row="0"
-                android:layout_column="1"
-                android:text="@string/face_n" />
-
-            <View
-                android:layout_row="0"
-                android:layout_column="2"
-                android:layout_width="48dp"
-                android:layout_height="48dp" />
-
-            <Button
-                android:id="@+id/face_w"
-                style="@style/CompassButton"
-                android:layout_row="1"
-                android:layout_column="0"
-                android:text="@string/face_w" />
-
-            <Button
-                android:id="@+id/face_clear"
-                style="@style/CompassButton"
-                android:layout_row="1"
-                android:layout_column="1"
-                android:text="@string/face_clear_symbol"
-                app:backgroundTint="@color/status_border" />
-
-            <Button
-                android:id="@+id/face_e"
-                style="@style/CompassButton"
-                android:layout_row="1"
-                android:layout_column="2"
-                android:text="@string/face_e" />
-
-            <View
-                android:layout_row="2"
-                android:layout_column="0"
-                android:layout_width="48dp"
-                android:layout_height="48dp" />
-
-            <Button
-                android:id="@+id/face_s"
-                style="@style/CompassButton"
-                android:layout_row="2"
-                android:layout_column="1"
-                android:text="@string/face_s" />
-
-            <View
-                android:layout_row="2"
-                android:layout_column="2"
-                android:layout_width="48dp"
-                android:layout_height="48dp" />
-        </GridLayout>
-
-        <!-- Arena actions -->
-        <TextView
-            style="@style/SectionHeader"
-            android:text="@string/section_arena" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:text="@string/tab_log" />
+    </com.google.android.material.tabs.TabLayout>
 
-            <Button
-                android:id="@+id/btn_send_map"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:text="@string/send_map" />
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-            <Button
-                android:id="@+id/btn_clear_map"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/clear_map" />
-        </LinearLayout>
-
+        <!-- Tab 1: Control - robot status plus the movement D-pad (C.3, C.4) -->
         <LinearLayout
+            android:id="@+id/page_control"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btn_start_image"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:text="@string/start_image" />
-
-            <Button
-                android:id="@+id/btn_start_fastest"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/start_fastest" />
-        </LinearLayout>
-
-        <!-- Free text send, useful when proving C.1 with the AMD tool -->
-        <TextView
-            style="@style/SectionHeader"
-            android:text="@string/section_serial" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:hint="@string/message_hint">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/input_message"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:imeOptions="actionSend"
-                    android:inputType="text"
-                    android:maxLines="1" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <Button
-                android:id="@+id/btn_send_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:text="@string/send" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="20dp">
 
             <TextView
                 style="@style/SectionHeader"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:text="@string/section_log" />
+                android:layout_marginTop="0dp"
+                android:text="@string/section_status" />
 
-            <Button
-                android:id="@+id/btn_clear_log"
-                style="@style/Widget.Material3.Button.TextButton"
+            <TextView
+                android:id="@+id/status_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_status"
+                android:minHeight="56dp"
+                android:padding="12dp"
+                android:text="@string/status_ready"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/robot_pose"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="6dp"
+                android:text="@string/robot_pose_placeholder"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <!-- 3x3 arrow D-pad: turn-left/forward/turn-right on top,
+                 reverse-left/reverse/reverse-right on the bottom, Stop in the
+                 centre. Every cell (including the two side fillers, which have
+                 no command of their own) uses the same flush square tile, zero
+                 margin, so the pad reads as one solid square block. -->
+            <TextView
+                style="@style/SectionHeader"
+                android:text="@string/section_movement" />
+
+            <GridLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/clear" />
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:columnCount="3"
+                android:rowCount="3"
+                android:useDefaultMargins="false">
+
+                <ImageButton
+                    android:id="@+id/btn_turn_left"
+                    style="@style/DpadButton"
+                    android:layout_row="0"
+                    android:layout_column="0"
+                    android:contentDescription="@string/cmd_turn_left"
+                    android:rotation="0"
+                    android:src="@drawable/ic_dir_turn" />
+
+                <ImageButton
+                    android:id="@+id/btn_forward"
+                    style="@style/DpadButton"
+                    android:layout_row="0"
+                    android:layout_column="1"
+                    android:contentDescription="@string/cmd_forward"
+                    android:rotation="0"
+                    android:src="@drawable/ic_dir_arrow" />
+
+                <ImageButton
+                    android:id="@+id/btn_turn_right"
+                    style="@style/DpadButton"
+                    android:layout_row="0"
+                    android:layout_column="2"
+                    android:contentDescription="@string/cmd_turn_right"
+                    android:scaleX="-1"
+                    android:src="@drawable/ic_dir_turn" />
+
+                <View
+                    style="@style/DpadFiller"
+                    android:layout_row="1"
+                    android:layout_column="0" />
+
+                <ImageButton
+                    android:id="@+id/btn_stop"
+                    style="@style/DpadStopButton"
+                    android:layout_row="1"
+                    android:layout_column="1"
+                    android:contentDescription="@string/cmd_stop"
+                    android:src="@drawable/ic_stop" />
+
+                <View
+                    style="@style/DpadFiller"
+                    android:layout_row="1"
+                    android:layout_column="2" />
+
+                <ImageButton
+                    android:id="@+id/btn_reverse_left"
+                    style="@style/DpadButton"
+                    android:layout_row="2"
+                    android:layout_column="0"
+                    android:contentDescription="@string/cmd_reverse_left"
+                    android:rotation="225"
+                    android:src="@drawable/ic_dir_arrow" />
+
+                <ImageButton
+                    android:id="@+id/btn_reverse"
+                    style="@style/DpadButton"
+                    android:layout_row="2"
+                    android:layout_column="1"
+                    android:contentDescription="@string/cmd_reverse"
+                    android:rotation="180"
+                    android:src="@drawable/ic_dir_arrow" />
+
+                <ImageButton
+                    android:id="@+id/btn_reverse_right"
+                    style="@style/DpadButton"
+                    android:layout_row="2"
+                    android:layout_column="2"
+                    android:contentDescription="@string/cmd_reverse_right"
+                    android:rotation="135"
+                    android:src="@drawable/ic_dir_arrow" />
+            </GridLayout>
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/log_text"
+        <!-- Tab 2: Obstacles - target face annotation plus map-wide actions
+             (C.6, C.7), used while setting the arena up before/during a run. -->
+        <LinearLayout
+            android:id="@+id/page_obstacles"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_log"
-            android:fontFamily="monospace"
-            android:minHeight="120dp"
-            android:padding="8dp"
-            android:text="@string/log_empty"
-            android:textSize="11sp" />
-    </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:visibility="gone">
+
+            <TextView
+                style="@style/SectionHeader"
+                android:layout_marginTop="0dp"
+                android:text="@string/section_obstacle" />
+
+            <TextView
+                android:id="@+id/selected_obstacle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/no_obstacle_selected"
+                android:textSize="14sp" />
+
+            <!-- Compass cross so each button sits where its direction actually
+                 points (N above, S below, E right, W left). Centre button
+                 mirrors the map gesture: tapping the middle of an obstacle
+                 clears its face. -->
+            <GridLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:columnCount="3"
+                android:rowCount="3"
+                android:useDefaultMargins="false">
+
+                <View
+                    android:layout_row="0"
+                    android:layout_column="0"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp" />
+
+                <Button
+                    android:id="@+id/face_n"
+                    style="@style/CompassButton"
+                    android:layout_row="0"
+                    android:layout_column="1"
+                    android:text="@string/face_n" />
+
+                <View
+                    android:layout_row="0"
+                    android:layout_column="2"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp" />
+
+                <Button
+                    android:id="@+id/face_w"
+                    style="@style/CompassButton"
+                    android:layout_row="1"
+                    android:layout_column="0"
+                    android:text="@string/face_w" />
+
+                <Button
+                    android:id="@+id/face_clear"
+                    style="@style/CompassButton"
+                    android:layout_row="1"
+                    android:layout_column="1"
+                    android:text="@string/face_clear_symbol"
+                    app:backgroundTint="@color/status_border" />
+
+                <Button
+                    android:id="@+id/face_e"
+                    style="@style/CompassButton"
+                    android:layout_row="1"
+                    android:layout_column="2"
+                    android:text="@string/face_e" />
+
+                <View
+                    android:layout_row="2"
+                    android:layout_column="0"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp" />
+
+                <Button
+                    android:id="@+id/face_s"
+                    style="@style/CompassButton"
+                    android:layout_row="2"
+                    android:layout_column="1"
+                    android:text="@string/face_s" />
+
+                <View
+                    android:layout_row="2"
+                    android:layout_column="2"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp" />
+            </GridLayout>
+
+            <TextView
+                style="@style/SectionHeader"
+                android:text="@string/section_arena" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_send_map"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
+                    android:text="@string/send_map" />
+
+                <Button
+                    android:id="@+id/btn_clear_map"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/clear_map" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_start_image"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
+                    android:text="@string/start_image" />
+
+                <Button
+                    android:id="@+id/btn_start_fastest"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/start_fastest" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Tab 3: Log - free text send plus the raw traffic log (C.1),
+             mainly for proving connectivity with the AMD tool. -->
+        <LinearLayout
+            android:id="@+id/page_log"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:visibility="gone">
+
+            <TextView
+                style="@style/SectionHeader"
+                android:layout_marginTop="0dp"
+                android:text="@string/section_serial" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
+                    android:hint="@string/message_hint">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/input_message"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:imeOptions="actionSend"
+                        android:inputType="text"
+                        android:maxLines="1" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <Button
+                    android:id="@+id/btn_send_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:text="@string/send" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/SectionHeader"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/section_log" />
+
+                <Button
+                    android:id="@+id/btn_clear_log"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/clear" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/log_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_log"
+                android:fontFamily="monospace"
+                android:minHeight="120dp"
+                android:padding="8dp"
+                android:text="@string/log_empty"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </FrameLayout>
+</LinearLayout>

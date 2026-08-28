@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -12,6 +13,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.tabs.TabLayout
 import com.sc2079.mdp.R
 import com.sc2079.mdp.bluetooth.BluetoothController
 import com.sc2079.mdp.bluetooth.ConnectionState
@@ -51,6 +53,7 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
         prefs = Prefs(this)
 
         binding.arenaView.listener = this
+        wireTabs()
         wireMovementButtons()
         wireObstaclePanel()
         wireArenaActions()
@@ -59,6 +62,24 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
     }
 
     // ---------------------------------------------------------------- wiring
+
+    /**
+     * Three fixed tabs stand in for what used to be one long scrolling panel:
+     * Control (drive the robot), Obstacles (set up the map), Log (raw traffic /
+     * manual serial testing). Only one page is visible at a time; the arena map
+     * itself sits outside this panel and stays visible regardless of tab.
+     */
+    private fun wireTabs() = with(binding.controls) {
+        val pages = listOf(pageControl, pageObstacles, pageLog)
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                pages.forEachIndexed { index, page -> page.visibility = if (index == tab.position) View.VISIBLE else View.GONE }
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab) = Unit
+            override fun onTabReselected(tab: TabLayout.Tab) = Unit
+        })
+    }
 
     /** Checklist C.3: a D-pad of arrow buttons, each transmitting over Bluetooth. */
     private fun wireMovementButtons() = with(binding.controls) {

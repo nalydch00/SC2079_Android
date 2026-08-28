@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Square (lightly rounded) tile rather than a circle, and drawn with zero
+     margin between cells so the whole 3x3 pad reads as one solid block instead
+     of separate floating buttons with gaps between them. -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
     android:color="#40FFFFFF">
     <item>
-        <shape android:shape="oval">
+        <shape android:shape="rectangle">
             <solid android:color="@color/dpad_button" />
+            <corners android:radius="10dp" />
         </shape>
     </item>
 </ripple>

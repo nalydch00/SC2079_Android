@@ -31,7 +31,7 @@
         <include
             android:id="@+id/controls"
             layout="@layout/view_controls"
-            android:layout_width="380dp"
+            android:layout_width="460dp"
             android:layout_height="match_parent" />
     </LinearLayout>
 </LinearLayout>

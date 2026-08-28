@@ -19,22 +19,33 @@
     </style>
 
     <!-- D-pad movement buttons (checklist C.3): plain framework ImageButton, so
-         the circular background below is drawn exactly as authored with no
-         Material theming fighting it. -->
+         the square background below is drawn exactly as authored with no
+         Material theming fighting it. Zero margin so all nine cells (including
+         the filler tiles) butt up against each other - the pad should read as
+         one solid square block, not separate floating buttons. -->
     <style name="DpadButton">
         <item name="android:layout_width">64dp</item>
         <item name="android:layout_height">64dp</item>
-        <item name="android:layout_margin">4dp</item>
+        <item name="android:layout_margin">0dp</item>
         <item name="android:background">@drawable/bg_dpad_button</item>
         <item name="android:padding">18dp</item>
         <item name="android:scaleType">fitCenter</item>
         <item name="android:tint">@android:color/white</item>
-        <item name="android:elevation">2dp</item>
     </style>
 
     <style name="DpadStopButton" parent="DpadButton">
         <item name="android:background">@drawable/bg_dpad_stop</item>
         <item name="android:padding">22dp</item>
+    </style>
+
+    <!-- Non-interactive corners of the D-pad grid that have no movement command
+         (there is no diagonal-strafe equivalent to fill them with). Same tile
+         so the pad's silhouette stays one continuous square. -->
+    <style name="DpadFiller">
+        <item name="android:layout_width">64dp</item>
+        <item name="android:layout_height">64dp</item>
+        <item name="android:layout_margin">0dp</item>
+        <item name="android:background">@drawable/bg_dpad_button</item>
     </style>
 
     <!-- Compass-arranged target-face buttons (checklist C.7). Small MaterialButtons

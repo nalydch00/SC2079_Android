@@ -9,9 +9,12 @@
     <string name="section_serial">Serial</string>
     <string name="section_log">Raw traffic</string>
 
+    <string name="tab_control">Control</string>
+    <string name="tab_obstacles">Obstacles</string>
+    <string name="tab_log">Log</string>
+
     <string name="connect">Connect</string>
     <string name="listen">Reconnect</string>
-    <string name="disconnect">Disconnect</string>
     <string name="scan">Scan</string>
     <string name="scanning">Scanning…</string>
     <string name="cancel">Cancel</string>
