@@ -9,6 +9,19 @@ Written in Kotlin with Android Views. Open the repository root in **Android
 Studio** (`File → Open`), let it sync, and run the `app` configuration on a
 tablet.
 
+The app is two screens, kept deliberately separate for a focused interface at
+each step:
+
+1. **Connect** (`ui/ConnectionActivity.kt`, launcher) — a plain screen whose only
+   job is getting a Bluetooth link up. It hands off automatically the moment
+   the link connects.
+2. **Control** (`ui/ControlActivity.kt`) — the arena map and controls, reached
+   only once connected. Designed for landscape (how the tablet is normally
+   mounted during a run), though portrait still works. A link drop here shows
+   "Reconnecting…" in the toolbar without leaving the screen — `BluetoothController`
+   keeps retrying in the background (checklist C.8) — and **Disconnect** in the
+   overflow menu is the explicit way back to the Connect screen.
+
 | | |
 |---|---|
 | Language | Kotlin 1.9.24 |
@@ -21,12 +34,12 @@ tablet.
 | Item | Requirement | Where it lives |
 |---|---|---|
 | **C.1** | Transmit and receive text over the Bluetooth serial link | `bluetooth/BluetoothController.kt`; the *Serial* box in the control panel sends free text, and everything received appears in the *Raw traffic* log |
-| **C.2** | GUI scanning, selection and connection | **Connect** button → `bluetooth/DeviceListDialogFragment.kt` (paired devices listed immediately, **Scan** appends discovered ones) |
-| **C.3** | Interactive control of robot movement | The seven labelled movement buttons in the control panel — Forward, Reverse, Turn left/right, Reverse left/right, Stop |
+| **C.2** | GUI scanning, selection and connection | The **Connect** screen (`ui/ConnectionActivity.kt`) → `bluetooth/DeviceListDialogFragment.kt` (paired devices listed immediately, **Scan** appends discovered ones) |
+| **C.3** | Interactive control of robot movement | A 3×3 arrow D-pad on the Control screen — turn left/forward/turn right on top, reverse-left/reverse/reverse-right on the bottom, Stop in the centre |
 | **C.4** | Remote update & status messages | The bold **Robot status** box. It shows only recognised status/robot/target events; unrecognised traffic goes to the separate raw log |
 | **C.5** | 2D arena display with numbered obstacles and the robot | `ui/ArenaView.kt` — 20 × 20 grid with axis labels, obstacle numbers in small white text, robot drawn over its 3 × 3 footprint with a direction arrow |
 | **C.6** | Interactive placement and movement of obstacles | Tap an empty cell to add; drag to move; drag off the arena to delete. `ADD` / `SUB` transmitted when the finger lifts |
-| **C.7** | Annotate the obstacle face carrying the target | Tap an edge of an obstacle to set that face (middle clears it); or long-press it for the face picker dialog; or use the N/E/S/W buttons in *Selected obstacle*. `FACE` transmitted each time |
+| **C.7** | Annotate the obstacle face carrying the target | Tap an edge of an obstacle to set that face (middle clears it); or long-press it for the face picker dialog; or use the N/E/S/W buttons arranged in a compass cross under *Selected obstacle*, so each button sits where its direction actually points. `FACE` transmitted each time |
 | **C.8** | Robust connectivity, automatic re-establishment | `BluetoothController` runs a retrying client loop **and** an RFCOMM server socket at the same time, so the link comes back whether the tablet or the robot re-initiates |
 | **C.9** | Display image target ID on obstacle blocks | `TARGET,...` repaints the block green with the target ID in large white text, plus a thick red bar on the target face |
 | **C.10** | Update robot position and facing direction | `ROBOT,<x>,<y>,<dir>` moves and rotates the robot icon |
@@ -98,7 +111,7 @@ app/src/main/java/com/sc2079/mdp/
 ├── bluetooth/    RFCOMM link, connection state, device picker
 ├── model/        Arena, Obstacle, Robot, Direction — pure Kotlin, unit tested
 ├── protocol/     Message parsing and formatting — pure Kotlin, unit tested
-├── ui/           MainActivity, MainViewModel, ArenaView, dialogs
+├── ui/           ConnectionActivity, ControlActivity, MainViewModel, ArenaView, dialogs
 └── util/         Runtime permissions, SharedPreferences
 ```
 

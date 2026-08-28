@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A shaft curving from "up" to "left", for the pivot/turn buttons. Turn right
+     reuses this drawable mirrored horizontally (scaleX="-1" on the widget)
+     rather than a second file. Built from straight lines and one quadratic
+     curve only - no elliptical arcs - to keep the path syntax unambiguous. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Shaft: straight up, then a quarter-curve bending left -->
+    <path
+        android:pathData="M17,19 L17,12 Q17,7 12,7 L9,7"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <!-- Arrowhead, pointing left -->
+    <path
+        android:pathData="M10,3 L4,7 L10,11 Z"
+        android:fillColor="#FFFFFF" />
+</vector>

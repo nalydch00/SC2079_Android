@@ -2,7 +2,6 @@
 <resources>
     <string name="app_name">MDP Remote</string>
 
-    <string name="section_connection">Bluetooth</string>
     <string name="section_status">Robot status</string>
     <string name="section_movement">Movement</string>
     <string name="section_obstacle">Selected obstacle</string>
@@ -56,6 +55,7 @@
     <string name="face_s">S</string>
     <string name="face_w">W</string>
     <string name="face_none">None</string>
+    <string name="face_clear_symbol">✕</string>
     <string name="face_option">%1$s (%2$s)</string>
     <string name="face_clear">Clear annotation</string>
     <string name="face_dialog_title">Target face of obstacle %1$d</string>
@@ -79,4 +79,10 @@
     <string name="bluetooth_unsupported">This device has no Bluetooth adapter.</string>
     <string name="enable_bluetooth">Please turn Bluetooth on first.</string>
     <string name="cell_occupied">That cell already has an obstacle.</string>
+
+    <string name="connection_tagline">Robot Remote Controller</string>
+    <string name="connection_hint">The control screen opens automatically once connected.</string>
+    <string name="menu_disconnect">Disconnect</string>
+    <string name="toolbar_subtitle_connected">Connected to %1$s</string>
+    <string name="toolbar_subtitle_reconnecting">Reconnecting…</string>
 </resources>

@@ -10,4 +10,6 @@
     <color name="state_disconnected">#C62828</color>
     <color name="log_background">#ECEFF1</color>
     <color name="status_border">#B0BEC5</color>
+    <color name="dpad_button">#1B4F72</color>
+    <color name="dpad_stop">#C62828</color>
 </resources>

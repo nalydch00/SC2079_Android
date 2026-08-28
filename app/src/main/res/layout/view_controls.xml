@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/panel_background"
@@ -10,60 +11,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="12dp">
-
-        <!-- Bluetooth connection (C.2, C.8) -->
-        <TextView
-            style="@style/SectionHeader"
-            android:text="@string/section_connection" />
-
-        <TextView
-            android:id="@+id/connection_state"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_status"
-            android:padding="10dp"
-            android:text="@string/state_disconnected"
-            android:textColor="@color/state_disconnected"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/connection_device"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="4dp"
-            android:text="@string/no_device"
-            android:textSize="13sp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/connect_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:text="@string/connect" />
-
-            <Button
-                android:id="@+id/listen_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:text="@string/listen" />
-
-            <Button
-                android:id="@+id/disconnect_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/disconnect" />
-        </LinearLayout>
 
         <!-- Status / remote update messages (C.4) -->
         <TextView
@@ -91,93 +38,97 @@
             android:textSize="14sp"
             android:textStyle="bold" />
 
-        <!-- Movement control (C.3) -->
+        <!-- Movement control (C.3): a 3x3 arrow D-pad instead of labelled text
+             buttons. Row 1 = turn-left / forward / turn-right, row 3 = reverse
+             variants, Stop sits in the centre where it is always reachable
+             without hunting across the panel. -->
         <TextView
             style="@style/SectionHeader"
             android:text="@string/section_movement" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <GridLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:columnCount="3"
+            android:rowCount="3"
+            android:useDefaultMargins="false">
 
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
-
-            <Button
-                android:id="@+id/btn_forward"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/cmd_forward" />
-
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:orientation="horizontal">
-
-            <Button
+            <ImageButton
                 android:id="@+id/btn_turn_left"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:text="@string/cmd_turn_left" />
+                style="@style/DpadButton"
+                android:layout_row="0"
+                android:layout_column="0"
+                android:contentDescription="@string/cmd_turn_left"
+                android:rotation="0"
+                android:src="@drawable/ic_dir_turn" />
 
-            <Button
-                android:id="@+id/btn_stop"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:text="@string/cmd_stop" />
+            <ImageButton
+                android:id="@+id/btn_forward"
+                style="@style/DpadButton"
+                android:layout_row="0"
+                android:layout_column="1"
+                android:contentDescription="@string/cmd_forward"
+                android:rotation="0"
+                android:src="@drawable/ic_dir_arrow" />
 
-            <Button
+            <ImageButton
                 android:id="@+id/btn_turn_right"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/cmd_turn_right" />
-        </LinearLayout>
+                style="@style/DpadButton"
+                android:layout_row="0"
+                android:layout_column="2"
+                android:contentDescription="@string/cmd_turn_right"
+                android:scaleX="-1"
+                android:src="@drawable/ic_dir_turn" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:orientation="horizontal">
+            <View
+                android:layout_row="1"
+                android:layout_column="0"
+                android:layout_width="64dp"
+                android:layout_height="64dp" />
 
-            <Button
+            <ImageButton
+                android:id="@+id/btn_stop"
+                style="@style/DpadStopButton"
+                android:layout_row="1"
+                android:layout_column="1"
+                android:contentDescription="@string/cmd_stop"
+                android:src="@drawable/ic_stop" />
+
+            <View
+                android:layout_row="1"
+                android:layout_column="2"
+                android:layout_width="64dp"
+                android:layout_height="64dp" />
+
+            <ImageButton
                 android:id="@+id/btn_reverse_left"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:text="@string/cmd_reverse_left" />
+                style="@style/DpadButton"
+                android:layout_row="2"
+                android:layout_column="0"
+                android:contentDescription="@string/cmd_reverse_left"
+                android:rotation="225"
+                android:src="@drawable/ic_dir_arrow" />
 
-            <Button
+            <ImageButton
                 android:id="@+id/btn_reverse"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:text="@string/cmd_reverse" />
+                style="@style/DpadButton"
+                android:layout_row="2"
+                android:layout_column="1"
+                android:contentDescription="@string/cmd_reverse"
+                android:rotation="180"
+                android:src="@drawable/ic_dir_arrow" />
 
-            <Button
+            <ImageButton
                 android:id="@+id/btn_reverse_right"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/cmd_reverse_right" />
-        </LinearLayout>
+                style="@style/DpadButton"
+                android:layout_row="2"
+                android:layout_column="2"
+                android:contentDescription="@string/cmd_reverse_right"
+                android:rotation="135"
+                android:src="@drawable/ic_dir_arrow" />
+        </GridLayout>
 
         <!-- Selected obstacle: target face annotation (C.7) -->
         <TextView
@@ -191,56 +142,79 @@
             android:text="@string/no_obstacle_selected"
             android:textSize="14sp" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- Compass cross so each button sits where its direction actually
+             points (N above, S below, E right, W left), rather than a row that
+             reads left-to-right regardless of meaning. Centre button mirrors
+             the map gesture: tapping the middle of an obstacle clears its face. -->
+        <GridLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:orientation="horizontal">
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:columnCount="3"
+            android:rowCount="3"
+            android:useDefaultMargins="false">
+
+            <View
+                android:layout_row="0"
+                android:layout_column="0"
+                android:layout_width="48dp"
+                android:layout_height="48dp" />
 
             <Button
                 android:id="@+id/face_n"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="2dp"
-                android:layout_weight="1"
-                android:minWidth="0dp"
+                style="@style/CompassButton"
+                android:layout_row="0"
+                android:layout_column="1"
                 android:text="@string/face_n" />
 
-            <Button
-                android:id="@+id/face_e"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="2dp"
-                android:layout_weight="1"
-                android:minWidth="0dp"
-                android:text="@string/face_e" />
-
-            <Button
-                android:id="@+id/face_s"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="2dp"
-                android:layout_weight="1"
-                android:minWidth="0dp"
-                android:text="@string/face_s" />
+            <View
+                android:layout_row="0"
+                android:layout_column="2"
+                android:layout_width="48dp"
+                android:layout_height="48dp" />
 
             <Button
                 android:id="@+id/face_w"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="2dp"
-                android:layout_weight="1"
-                android:minWidth="0dp"
+                style="@style/CompassButton"
+                android:layout_row="1"
+                android:layout_column="0"
                 android:text="@string/face_w" />
 
             <Button
                 android:id="@+id/face_clear"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1.4"
-                android:minWidth="0dp"
-                android:text="@string/face_none" />
-        </LinearLayout>
+                style="@style/CompassButton"
+                android:layout_row="1"
+                android:layout_column="1"
+                android:text="@string/face_clear_symbol"
+                app:backgroundTint="@color/status_border" />
+
+            <Button
+                android:id="@+id/face_e"
+                style="@style/CompassButton"
+                android:layout_row="1"
+                android:layout_column="2"
+                android:text="@string/face_e" />
+
+            <View
+                android:layout_row="2"
+                android:layout_column="0"
+                android:layout_width="48dp"
+                android:layout_height="48dp" />
+
+            <Button
+                android:id="@+id/face_s"
+                style="@style/CompassButton"
+                android:layout_row="2"
+                android:layout_column="1"
+                android:text="@string/face_s" />
+
+            <View
+                android:layout_row="2"
+                android:layout_column="2"
+                android:layout_width="48dp"
+                android:layout_height="48dp" />
+        </GridLayout>
 
         <!-- Arena actions -->
         <TextView

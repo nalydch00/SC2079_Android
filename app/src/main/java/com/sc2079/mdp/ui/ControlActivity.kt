@@ -1,14 +1,11 @@
 package com.sc2079.mdp.ui
 
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
@@ -18,51 +15,35 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.sc2079.mdp.R
 import com.sc2079.mdp.bluetooth.BluetoothController
 import com.sc2079.mdp.bluetooth.ConnectionState
-import com.sc2079.mdp.bluetooth.DeviceListDialogFragment
-import com.sc2079.mdp.databinding.ActivityMainBinding
+import com.sc2079.mdp.databinding.ActivityControlBinding
 import com.sc2079.mdp.model.Arena
 import com.sc2079.mdp.model.Direction
 import com.sc2079.mdp.model.Obstacle
 import com.sc2079.mdp.protocol.IncomingMessage
 import com.sc2079.mdp.protocol.OutgoingMessages
-import com.sc2079.mdp.util.BluetoothPermissions
 import com.sc2079.mdp.util.Prefs
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
- * The single screen of the remote controller: the arena map plus the control
- * panel, wired to the Bluetooth link.
+ * The robot control screen: arena map plus the D-pad, obstacle and status
+ * controls. Only reached once [ConnectionActivity] has a live link - this
+ * screen assumes Bluetooth is already connected and never drives the connect
+ * flow itself.
  *
  * Every checklist item is reachable from here - see the README for the mapping.
  */
-class MainActivity : AppCompatActivity(), ArenaView.Listener, DeviceListDialogFragment.DeviceChosenListener {
+class ControlActivity : AppCompatActivity(), ArenaView.Listener {
 
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: ActivityControlBinding
     private lateinit var bluetooth: BluetoothController
     private lateinit var prefs: Prefs
 
     private val viewModel: MainViewModel by viewModels()
 
-    private val permissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { grants ->
-        if (grants.values.all { it }) {
-            showDevicePicker()
-        } else {
-            toast(getString(R.string.permissions_required))
-        }
-    }
-
-    private val enableBluetoothLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult(),
-    ) {
-        if (bluetooth.isBluetoothEnabled) showDevicePicker()
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivityControlBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
 
@@ -70,7 +51,6 @@ class MainActivity : AppCompatActivity(), ArenaView.Listener, DeviceListDialogFr
         prefs = Prefs(this)
 
         binding.arenaView.listener = this
-        wireConnectionButtons()
         wireMovementButtons()
         wireObstaclePanel()
         wireArenaActions()
@@ -80,13 +60,7 @@ class MainActivity : AppCompatActivity(), ArenaView.Listener, DeviceListDialogFr
 
     // ---------------------------------------------------------------- wiring
 
-    private fun wireConnectionButtons() = with(binding.controls) {
-        connectButton.setOnClickListener { requestConnect() }
-        listenButton.setOnClickListener { reconnectToLastDevice() }
-        disconnectButton.setOnClickListener { bluetooth.disconnect() }
-    }
-
-    /** Checklist C.3: labelled buttons, each one transmitting over Bluetooth. */
+    /** Checklist C.3: a D-pad of arrow buttons, each transmitting over Bluetooth. */
     private fun wireMovementButtons() = with(binding.controls) {
         btnForward.setOnClickListener { sendCommand(Prefs.CommandAction.FORWARD) }
         btnReverse.setOnClickListener { sendCommand(Prefs.CommandAction.REVERSE) }
@@ -154,8 +128,8 @@ class MainActivity : AppCompatActivity(), ArenaView.Listener, DeviceListDialogFr
                 launch { viewModel.status.collectLatest { binding.controls.statusText.text = it } }
                 launch { viewModel.log.collectLatest(::renderLog) }
                 launch { viewModel.selectedObstacleId.collectLatest { renderSelection() } }
-                launch { bluetooth.state.collectLatest(::renderConnectionState) }
-                launch { bluetooth.remoteName.collectLatest(::renderRemoteName) }
+                launch { bluetooth.state.collectLatest(::renderToolbarSubtitle) }
+                launch { bluetooth.remoteName.collectLatest { renderToolbarSubtitle(bluetooth.state.value) } }
                 launch { bluetooth.incoming.collect(::onIncomingLine) }
                 launch { bluetooth.events.collect(::onLinkEvent) }
             }
@@ -194,19 +168,21 @@ class MainActivity : AppCompatActivity(), ArenaView.Listener, DeviceListDialogFr
             if (lines.isEmpty()) getString(R.string.log_empty) else lines.takeLast(LOG_LINES_SHOWN).joinToString("\n")
     }
 
-    private fun renderConnectionState(state: ConnectionState) {
-        val (labelRes, colorRes) = when (state) {
-            ConnectionState.CONNECTED -> R.string.state_connected to R.color.state_connected
-            ConnectionState.CONNECTING -> R.string.state_connecting to R.color.state_connecting
-            ConnectionState.RECONNECTING -> R.string.state_reconnecting to R.color.state_connecting
-            ConnectionState.DISCONNECTED -> R.string.state_disconnected to R.color.state_disconnected
+    /**
+     * This screen assumes the link is already up, so its only job re: connection
+     * state is a small toolbar subtitle - full connect/reconnect UI lives on
+     * [ConnectionActivity]. A drop mid-run shows "Reconnecting..." here without
+     * kicking the user off the map (checklist C.8): [BluetoothController] keeps
+     * retrying in the background on its own.
+     */
+    private fun renderToolbarSubtitle(state: ConnectionState) {
+        binding.toolbar.subtitle = when (state) {
+            ConnectionState.CONNECTED ->
+                getString(R.string.toolbar_subtitle_connected, bluetooth.remoteName.value ?: getString(R.string.no_device))
+            ConnectionState.RECONNECTING, ConnectionState.CONNECTING ->
+                getString(R.string.toolbar_subtitle_reconnecting)
+            ConnectionState.DISCONNECTED -> null
         }
-        binding.controls.connectionState.setText(labelRes)
-        binding.controls.connectionState.setTextColor(getColor(colorRes))
-    }
-
-    private fun renderRemoteName(name: String?) {
-        binding.controls.connectionDevice.text = name ?: getString(R.string.no_device)
     }
 
     /** Checklist C.1, C.4, C.9, C.10: one received line, applied to the GUI. */
@@ -275,56 +251,7 @@ class MainActivity : AppCompatActivity(), ArenaView.Listener, DeviceListDialogFr
         viewModel.moveRobot(x, y)
     }
 
-    // ------------------------------------------------------------- bluetooth
-
-    private fun requestConnect() {
-        if (!ensureReady()) return
-        showDevicePicker()
-    }
-
-    /**
-     * Checks adapter, permissions and radio state, launching whichever prompt is
-     * missing. Returns true only when the app can talk to Bluetooth right now.
-     */
-    private fun ensureReady(): Boolean {
-        if (!bluetooth.isBluetoothSupported) {
-            toast(getString(R.string.bluetooth_unsupported))
-            return false
-        }
-        if (!BluetoothPermissions.allGranted(this)) {
-            permissionLauncher.launch(BluetoothPermissions.missing(this))
-            return false
-        }
-        if (!bluetooth.isBluetoothEnabled) {
-            toast(getString(R.string.enable_bluetooth))
-            enableBluetoothLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
-            return false
-        }
-        return true
-    }
-
-    private fun showDevicePicker() {
-        if (!ensureReady()) return
-        if (supportFragmentManager.findFragmentByTag(DeviceListDialogFragment.TAG) != null) return
-        DeviceListDialogFragment().show(supportFragmentManager, DeviceListDialogFragment.TAG)
-    }
-
-    /**
-     * Checklist C.8: re-open the link to the device we used last. Falls back to
-     * listening for an incoming connection when that device is no longer paired,
-     * which is the case the AMD tool exercises when it reconnects on its own.
-     */
-    private fun reconnectToLastDevice() {
-        if (!ensureReady()) return
-        val address = prefs.lastDeviceAddress
-        val device = address?.let { stored -> bluetooth.bondedDevices().firstOrNull { it.address == stored } }
-        if (device != null) bluetooth.connect(device) else bluetooth.listenForIncoming()
-    }
-
-    override fun onDeviceChosen(device: BluetoothDevice) {
-        prefs.lastDeviceAddress = device.address
-        bluetooth.connect(device)
-    }
+    // ------------------------------------------------------------------ misc
 
     private fun sendCommand(action: Prefs.CommandAction) {
         transmit(prefs.command(action))
@@ -356,6 +283,13 @@ class MainActivity : AppCompatActivity(), ArenaView.Listener, DeviceListDialogFr
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.action_disconnect -> {
+            bluetooth.disconnect()
+            startActivity(Intent(this, ConnectionActivity::class.java))
+            finish()
+            true
+        }
+
         R.id.action_commands -> {
             CommandSettingsDialog.show(this, prefs) { toast("Movement commands updated") }
             true
