@@ -25,6 +25,10 @@
     <string name="select_device">Select a device</string>
     <string name="no_devices">No devices yet. Pair the robot in Android settings, or tap Scan.</string>
     <string name="unnamed_device">Unnamed device</string>
+    <string name="scan_failed">Could not start scan - check Bluetooth is on and try again</string>
+    <string name="location_required_title">Location is off</string>
+    <string name="location_required_message">On this version of Android, finding nearby Bluetooth devices requires Location to be turned on, even though this app never uses your location. Already-paired devices still work without it.</string>
+    <string name="open_settings">Open settings</string>
     <string name="no_device">No device selected</string>
 
     <string name="state_disconnected">DISCONNECTED</string>

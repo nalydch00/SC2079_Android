@@ -14,8 +14,14 @@
         android:name="android.permission.ACCESS_FINE_LOCATION"
         android:maxSdkVersion="30" />
 
-    <!-- Android 12 and above. -->
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+    <!-- Android 12 and above. neverForLocation tells the system this app never
+         derives physical location from scan results, which is what lets scanning
+         work with the device's Location toggle off - without it, Android silently
+         withholds discovery results from third-party apps (system Settings is
+         exempt from this, which is why its own scanner does not need this flag). -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"
         tools:targetApi="s" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"
         tools:targetApi="s" />

@@ -8,8 +8,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,6 +20,7 @@ import android.widget.Button
 import android.widget.ListView
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
@@ -117,11 +120,44 @@ class DeviceListDialogFragment : DialogFragment() {
     }
 
     private fun startDiscovery() {
-        val adapterService = (requireContext().getSystemService(Context.BLUETOOTH_SERVICE)
+        val context = requireContext()
+        // On Android 11 and below classic Bluetooth discovery is gated on the
+        // system Location toggle (not just the ACCESS_FINE_LOCATION permission
+        // this app already holds), a restriction the system Settings app is
+        // exempt from - which is why a scan there can find devices that a scan
+        // here would silently miss. Android 12+ sidesteps this entirely via the
+        // BLUETOOTH_SCAN neverForLocation flag declared in the manifest.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && !isLocationEnabled(context)) {
+            offerToEnableLocation(context)
+            return
+        }
+        val adapterService = (context.getSystemService(Context.BLUETOOTH_SERVICE)
             as? android.bluetooth.BluetoothManager)?.adapter ?: return
         if (adapterService.isDiscovering) adapterService.cancelDiscovery()
-        adapterService.startDiscovery()
+        val started = adapterService.startDiscovery()
+        if (!started) {
+            Toast.makeText(context, R.string.scan_failed, Toast.LENGTH_SHORT).show()
+            return
+        }
         setScanning(true)
+    }
+
+    private fun isLocationEnabled(context: Context): Boolean {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+            ?: return true
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    }
+
+    private fun offerToEnableLocation(context: Context) {
+        AlertDialog.Builder(context)
+            .setTitle(R.string.location_required_title)
+            .setMessage(R.string.location_required_message)
+            .setPositiveButton(R.string.open_settings) { _, _ ->
+                startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun stopDiscovery() {
