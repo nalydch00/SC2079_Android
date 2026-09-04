@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A single straight arrow pointing up. Every straight-line movement button
-     (Forward, Reverse, Reverse left, Reverse right) reuses this one drawable
-     and points it the right way via the view's `rotation` attribute, so there
-     is only one glyph to keep consistent. -->
+<!-- A single straight arrow pointing up, reused for Forward (rotation 0) and
+     Reverse (rotation 180) via the view's `rotation` attribute, so there is
+     only one glyph to keep consistent. -->
+<!-- The four diagonal corners (turn/reverse left/right) use ic_dir_turn.xml
+     instead, mirrored per corner - see the D-pad comment in view_controls.xml. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"

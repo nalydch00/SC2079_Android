@@ -81,7 +81,12 @@
                  columns are each split top/bottom between the turn and reverse
                  variant on that side, so they stretch to fill the whole height
                  instead of leaving empty cells beside the centre column. Every
-                 pixel of the 192x192dp block is a real button - nothing decorative. -->
+                 pixel of the 192x192dp block is a real button - nothing decorative.
+                 All four corners share one curved ic_dir_turn glyph, mirrored per
+                 corner: turn-left as drawn, turn-right flipped horizontally,
+                 reverse-left flipped vertically, reverse-right flipped both ways -
+                 so the top pair and bottom pair read as the same shape pointing
+                 in opposite (up vs down) directions. -->
             <TextView
                 style="@style/SectionHeader"
                 android:text="@string/section_movement" />
@@ -115,8 +120,8 @@
                         android:layout_height="0dp"
                         android:layout_weight="1"
                         android:contentDescription="@string/cmd_reverse_left"
-                        android:rotation="225"
-                        android:src="@drawable/ic_dir_arrow" />
+                        android:scaleY="-1"
+                        android:src="@drawable/ic_dir_turn" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -176,8 +181,9 @@
                         android:layout_height="0dp"
                         android:layout_weight="1"
                         android:contentDescription="@string/cmd_reverse_right"
-                        android:rotation="135"
-                        android:src="@drawable/ic_dir_arrow" />
+                        android:scaleX="-1"
+                        android:scaleY="-1"
+                        android:src="@drawable/ic_dir_turn" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

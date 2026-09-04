@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A shaft curving from "up" to "left", for the pivot/turn buttons. Turn right
-     reuses this drawable mirrored horizontally (scaleX="-1" on the widget)
-     rather than a second file. Built from straight lines and one quadratic
-     curve only - no elliptical arcs - to keep the path syntax unambiguous. -->
+<!-- A shaft curving from "up" to "left", shared by all four diagonal D-pad
+     corners via view-level mirroring rather than four separate files:
+     turn-left as drawn, turn-right flipped horizontally (scaleX="-1"),
+     reverse-left flipped vertically (scaleY="-1"), reverse-right flipped both
+     ways (scaleX="-1" scaleY="-1") so it curves downward instead of upward.
+     Built from straight lines and one quadratic curve only - no elliptical
+     arcs - to keep the path syntax unambiguous. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
