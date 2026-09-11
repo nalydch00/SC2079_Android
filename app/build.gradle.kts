@@ -47,4 +47,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)
+    // The stub android.jar used for local unit tests throws "not mocked" for
+    // org.json calls; this pulls in the real implementation so
+    // OutgoingMessagesTest can actually exercise JSONObject/JSONArray.
+    testImplementation(libs.json)
 }

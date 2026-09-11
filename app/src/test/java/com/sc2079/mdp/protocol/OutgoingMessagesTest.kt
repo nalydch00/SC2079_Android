@@ -2,48 +2,69 @@ package com.sc2079.mdp.protocol
 
 import com.sc2079.mdp.model.Direction
 import com.sc2079.mdp.model.Obstacle
-import com.sc2079.mdp.model.Robot
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class OutgoingMessagesTest {
 
     @Test
-    fun `add uses the format from the briefing slides`() {
-        assertEquals("ADD,B1,(10,6)", OutgoingMessages.addObstacle(Obstacle(1, 10, 6)))
+    fun `obstacles message matches the team's cat-value schema`() {
+        val json = JSONObject(OutgoingMessages.obstaclesMessage(listOf(Obstacle(1, 5, 10)), "0"))
+        assertEquals("obstacles", json.getString("cat"))
+        val value = json.getJSONObject("value")
+        assertEquals("0", value.getString("mode"))
+        val obstacle = value.getJSONArray("obstacles").getJSONObject(0)
+        assertEquals(5, obstacle.getInt("x"))
+        assertEquals(10, obstacle.getInt("y"))
+        assertEquals(1, obstacle.getInt("id"))
+        assertEquals(OutgoingMessages.NO_FACE_CODE, obstacle.getInt("d"))
     }
 
     @Test
-    fun `remove uses the format from the briefing slides`() {
-        assertEquals("SUB,B1", OutgoingMessages.removeObstacle(1))
+    fun `obstacles message sorts by id and carries every obstacle`() {
+        val obstacles = listOf(Obstacle(2, 3, 4, targetFace = Direction.SOUTH), Obstacle(1, 10, 6))
+        val value = JSONObject(OutgoingMessages.obstaclesMessage(obstacles, "1")).getJSONObject("value")
+        val array = value.getJSONArray("obstacles")
+        assertEquals(2, array.length())
+        assertEquals(1, array.getJSONObject(0).getInt("id"))
+        assertEquals(2, array.getJSONObject(1).getInt("id"))
+        assertEquals("1", value.getString("mode"))
     }
 
     @Test
-    fun `face annotation names the obstacle and the direction`() {
-        assertEquals("FACE,B2,N", OutgoingMessages.targetFace(2, Direction.NORTH))
-        assertEquals("FACE,B2,NONE", OutgoingMessages.targetFace(2, null))
+    fun `direction codes follow the N=0 E=2 S=4 W=6 convention`() {
+        assertEquals(0, OutgoingMessages.directionCode(Direction.NORTH))
+        assertEquals(2, OutgoingMessages.directionCode(Direction.EAST))
+        assertEquals(4, OutgoingMessages.directionCode(Direction.SOUTH))
+        assertEquals(6, OutgoingMessages.directionCode(Direction.WEST))
     }
 
     @Test
-    fun `robot pose round trips through the parser`() {
-        val robot = Robot(7, 2, Direction.WEST)
-        val encoded = OutgoingMessages.robotPose(robot)
-        assertEquals("ROBOT,7,2,W", encoded)
-        val decoded = MessageParser.parse(encoded) as IncomingMessage.RobotUpdate
-        assertEquals(robot.x, decoded.x)
-        assertEquals(robot.y, decoded.y)
-        assertEquals(robot.facing, decoded.facing)
+    fun `an annotated face is carried as the d field`() {
+        val value = JSONObject(
+            OutgoingMessages.obstaclesMessage(listOf(Obstacle(1, 0, 0, targetFace = Direction.EAST)), "0"),
+        ).getJSONObject("value")
+        assertEquals(2, value.getJSONArray("obstacles").getJSONObject(0).getInt("d"))
     }
 
     @Test
-    fun `full map emits a face line only for annotated obstacles`() {
-        val obstacles = listOf(
-            Obstacle(2, 3, 4, targetFace = Direction.SOUTH),
-            Obstacle(1, 10, 6),
-        )
-        assertEquals(
-            listOf("ADD,B1,(10,6)", "ADD,B2,(3,4)", "FACE,B2,S"),
-            OutgoingMessages.fullMap(obstacles),
-        )
+    fun `an empty obstacle list still sends a valid message`() {
+        val value = JSONObject(OutgoingMessages.obstaclesMessage(emptyList(), "0")).getJSONObject("value")
+        assertEquals(0, value.getJSONArray("obstacles").length())
+    }
+
+    @Test
+    fun `control message wraps the trigger word`() {
+        val json = JSONObject(OutgoingMessages.controlMessage("start"))
+        assertEquals("control", json.getString("cat"))
+        assertEquals("start", json.getString("value"))
+    }
+
+    @Test
+    fun `manual message wraps the configured STM command string`() {
+        val json = JSONObject(OutgoingMessages.manualMessage("FW01"))
+        assertEquals("manual", json.getString("cat"))
+        assertEquals("FW01", json.getString("value"))
     }
 }

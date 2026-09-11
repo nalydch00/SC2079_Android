@@ -41,8 +41,6 @@ class Prefs(context: Context) {
         REVERSE_LEFT("cmd_reverse_left", "Reverse left", "rl"),
         REVERSE_RIGHT("cmd_reverse_right", "Reverse right", "rr"),
         STOP("cmd_stop", "Stop", "s"),
-        START_IMAGE("cmd_start_image", "Start image rec.", "START"),
-        START_FASTEST("cmd_start_fastest", "Start fastest path", "FASTEST"),
     }
 
     private companion object {

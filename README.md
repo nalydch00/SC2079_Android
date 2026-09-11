@@ -53,8 +53,8 @@ each step:
 | **C.3** | Interactive control of robot movement | A TV-remote style arrow D-pad on the Control screen: Forward/Stop/Reverse down the centre, Turn left/right and Reverse left/right filling the full height on either side (no dead space) - six directions including diagonals, plus Stop |
 | **C.4** | Remote update & status messages | The bold **Robot status** box. It shows only recognised status/robot/target events; unrecognised traffic goes to the separate raw log |
 | **C.5** | 2D arena display with numbered obstacles and the robot | `ui/ArenaView.kt` — 20 × 20 grid with axis labels, obstacle numbers in small white text, robot drawn over its 3 × 3 footprint with a direction arrow |
-| **C.6** | Interactive placement and movement of obstacles | Tap an empty cell to add; drag to move; drag off the arena to delete. `ADD` / `SUB` transmitted when the finger lifts |
-| **C.7** | Annotate the obstacle face carrying the target | Tap an edge of an obstacle to set that face (middle clears it); or press and hold it to light up four N/E/S/W zones around it, then slide onto one without lifting and release to pick it - a bigger, friendlier target than the edge itself for small blocks; or use the N/E/S/W buttons arranged in a compass cross under *Selected obstacle*. `FACE` transmitted each time |
+| **C.6** | Interactive placement and movement of obstacles | Tap an empty cell to add; drag to move; drag off the arena to delete. An `obstacles` message (the full current map) is transmitted when the finger lifts |
+| **C.7** | Annotate the obstacle face carrying the target | Tap an edge of an obstacle to set that face (middle clears it); or press and hold it to light up four N/E/S/W zones around it, then slide onto one without lifting and release to pick it - a bigger, friendlier target than the edge itself for small blocks; or use the N/E/S/W buttons arranged in a compass cross under *Selected obstacle*. An `obstacles` message is transmitted each time, carrying the updated face in that obstacle's `d` field |
 | **C.8** | Robust connectivity, automatic re-establishment | `BluetoothController` runs a retrying client loop **and** an RFCOMM server socket at the same time, so the link comes back whether the tablet or the robot re-initiates |
 | **C.9** | Display image target ID on obstacle blocks | `TARGET,...` repaints the block green with the target ID in large white text, plus a thick red bar on the target face |
 | **C.10** | Update robot position and facing direction | `ROBOT,<x>,<y>,<dir>` moves and rotates the robot icon |
@@ -64,7 +64,46 @@ each step:
 Coordinates use a bottom-left origin: `(0,0)` is the bottom-left cell, `x` grows
 east, `y` grows north. Every transmitted line is terminated with `\n`.
 
-### Received from the robot
+The two directions use different formats, matching how each side of the link
+was actually specified: outgoing (tablet → RPi) is JSON with a fixed `cat`/
+`value` envelope; incoming (RPi/robot → tablet) is the plain comma-separated
+text the checklist leaves up to the Android team to devise.
+
+### Transmitted by the tablet (JSON)
+
+| `cat` | `value` | Sent when |
+|---|---|---|
+| `obstacles` | `{"obstacles":[{"x","y","id","d"}, …],"mode"}` | Any obstacle is added, moved, removed, or its face (re-)annotated - always the **complete** current map, not a diff; also on **Send all** and before a task starts |
+| `control` | `"start"` | **Image rec.** or **Fastest path** is pressed (right after an `obstacles` message carrying the corresponding `mode`) |
+| `manual` | an STM command string | A D-pad movement button is pressed |
+
+```json
+{"cat":"obstacles","value":{"obstacles":[{"x":5,"y":10,"id":1,"d":2}],"mode":"0"}}
+{"cat":"control","value":"start"}
+{"cat":"manual","value":"f"}
+```
+
+Built with `OutgoingMessages.kt` (`org.json`, part of the Android platform - no
+extra dependency for the app itself; local unit tests pull in the real
+`org.json:json` library, since the stub `android.jar` used for JVM unit tests
+throws on real `org.json` calls).
+
+Per-obstacle fields: `x`/`y` are its grid coordinates, `id` its assigned
+number, and `d` its annotated target face as **N=0, E=2, S=4, W=6**, or **-1**
+when no face has been annotated yet (`OutgoingMessages.NO_FACE_CODE`). `mode`
+is `"0"` for Image recognition and `"1"` for Fastest path
+(`OutgoingMessages.MODE_IMAGE_RECOGNITION` / `MODE_FASTEST_PATH`), tracked in
+`MainViewModel` and set by whichever of the two Start buttons was last pressed.
+
+Movement tokens (the `manual` value) default to `f`, `r`, `tl`, `tr`, `rl`,
+`rr`, `s` and are editable at runtime from the overflow menu
+(**Movement commands**), so the app can match whatever STM command strings the
+team settles on without a rebuild - the JSON envelope around them is fixed,
+only the token content is configurable. The free-text **Serial** box (Log tab)
+sends whatever you type verbatim, unwrapped, for testing raw connectivity
+(checklist C.1) against something like the AMD tool.
+
+### Received from the robot (plain text)
 
 | Message | Effect |
 |---|---|
@@ -78,19 +117,10 @@ are case-insensitive, and surrounding whitespace or brackets are ignored.
 Anything else is kept in the raw log and never reaches the status box, which is
 what C.4 asks for.
 
-### Transmitted by the tablet
-
-| Message | Sent when |
-|---|---|
-| `ADD,B<n>,(<x>,<y>)` | Obstacle `n` is placed, or a drag finishes |
-| `SUB,B<n>` | Obstacle `n` is dragged off the arena |
-| `FACE,B<n>,<face>` | A target face is annotated (`FACE,B<n>,NONE` clears it) |
-| Movement tokens | A movement button is pressed |
-
-Movement tokens default to `f`, `r`, `tl`, `tr`, `rl`, `rr`, `s`, plus `START`
-and `FASTEST`. Every one of them is editable at runtime from the overflow menu
-(**Movement commands**), so the app can match whatever the RPi team settles on
-without a rebuild.
+> This side of the protocol isn't part of the JSON schema above - if the RPi
+> also reports status/pose/target updates as JSON rather than this plain-text
+> format, `MessageParser.kt` needs a matching update; ask before assuming
+> either way.
 
 ## Using the map
 
@@ -114,7 +144,8 @@ run.
    one). The state banner turns green on success.
 3. Send a line from the tool — `MSG,[Ready to start]`, `ROBOT,7,2,N`,
    `TARGET,B2,11,N` — and watch the status box and map update.
-4. Press the movement buttons and watch the tool's command log.
+4. Press the movement buttons and watch the tool's command log - each shows up
+   as `{"cat":"manual","value":"<token>"}`, not the bare token by itself.
 5. For C.8, hit **Disconnect** in the AMD tool. The banner turns orange
    (`RECONNECTING…`) and the app stays responsive; connect again from the tool
    and the link comes back on its own.

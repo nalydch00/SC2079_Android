@@ -102,20 +102,25 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
     }
 
     private fun wireArenaActions() = with(binding.controls) {
-        btnSendMap.setOnClickListener {
-            val obstacles = viewModel.arena.value.obstacles
-            if (obstacles.isEmpty()) {
-                toast("No obstacles on the map")
-                return@setOnClickListener
-            }
-            OutgoingMessages.fullMap(obstacles).forEach(::transmit)
-        }
+        btnSendMap.setOnClickListener { transmitObstacles() }
         btnClearMap.setOnClickListener {
-            viewModel.arena.value.obstacles.forEach { transmit(OutgoingMessages.removeObstacle(it.id)) }
             viewModel.clearArena()
+            transmitObstacles()
         }
-        btnStartImage.setOnClickListener { sendCommand(Prefs.CommandAction.START_IMAGE) }
-        btnStartFastest.setOnClickListener { sendCommand(Prefs.CommandAction.START_FASTEST) }
+        btnStartImage.setOnClickListener { startTask(OutgoingMessages.MODE_IMAGE_RECOGNITION) }
+        btnStartFastest.setOnClickListener { startTask(OutgoingMessages.MODE_FASTEST_PATH) }
+    }
+
+    /**
+     * Sets the task mode, resends the full obstacle list under that mode, then
+     * fires the `control`/`start` trigger - the RPi-side protocol expects the
+     * obstacles message and the start trigger as two separate messages rather
+     * than one combined payload.
+     */
+    private fun startTask(mode: String) {
+        viewModel.setMode(mode)
+        transmitObstacles()
+        transmit(OutgoingMessages.controlMessage("start"))
     }
 
     private fun wireSerialPanel() = with(binding.controls) {
@@ -237,7 +242,7 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
             toast(getString(R.string.cell_occupied))
             return
         }
-        transmit(OutgoingMessages.addObstacle(obstacle))
+        transmitObstacles()
     }
 
     override fun onObstacleMoved(id: Int, x: Int, y: Int) {
@@ -246,17 +251,17 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
             toast(getString(R.string.cell_occupied))
             return
         }
-        transmit(OutgoingMessages.addObstacle(moved))
+        transmitObstacles()
     }
 
     override fun onObstacleRemoved(id: Int) {
         viewModel.removeObstacle(id)
-        transmit(OutgoingMessages.removeObstacle(id))
+        transmitObstacles()
     }
 
     override fun onTargetFaceChanged(id: Int, face: Direction?) {
         viewModel.setTargetFace(id, face)
-        transmit(OutgoingMessages.targetFace(id, face))
+        transmitObstacles()
     }
 
     override fun onObstacleSelected(obstacle: Obstacle?) {
@@ -269,8 +274,14 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
 
     // ------------------------------------------------------------------ misc
 
+    /** Checklist C.3: movement buttons wrap their configured token as a `manual` message. */
     private fun sendCommand(action: Prefs.CommandAction) {
-        transmit(prefs.command(action))
+        transmit(OutgoingMessages.manualMessage(prefs.command(action)))
+    }
+
+    /** `obstacles` always carries the complete current map, not a diff (checklist C.6/C.7). */
+    private fun transmitObstacles() {
+        transmit(OutgoingMessages.obstaclesMessage(viewModel.arena.value.obstacles, viewModel.mode.value))
     }
 
     private fun applyFaceToSelection(face: Direction?) {

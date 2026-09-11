@@ -2,37 +2,69 @@ package com.sc2079.mdp.protocol
 
 import com.sc2079.mdp.model.Direction
 import com.sc2079.mdp.model.Obstacle
-import com.sc2079.mdp.model.Robot
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
- * Builders for the strings the tablet transmits, using the formats shown in the
- * ARCM briefing slides so the AMD tool's command log reads correctly.
+ * Builders for the JSON envelope the RPi expects over the Bluetooth link:
  *
  * ```
- * ADD,B<n>,(<x>,<y>)   obstacle n placed / moved   (C.6)
- * SUB,B<n>             obstacle n removed          (C.6)
- * FACE,B<n>,<face>     target face annotated       (C.7)
- * ROBOT,<x>,<y>,<dir>  robot pose set on the map
+ * {"cat":"obstacles","value":{"obstacles":[{"x":5,"y":10,"id":1,"d":2}],"mode":"0"}}
+ * {"cat":"control","value":"start"}
+ * {"cat":"manual","value":"FW01"}
  * ```
+ *
+ * "obstacles" always carries the *complete* current map, not a diff - so
+ * placing, moving, removing or annotating a single obstacle re-sends the whole
+ * array plus the current task [MODE_IMAGE_RECOGNITION]/[MODE_FASTEST_PATH].
+ * "control" carries fixed trigger words the RPi recognises (currently just
+ * `"start"`). "manual" wraps whatever raw STM command string the movement
+ * buttons are configured to send (checklist C.3) - those strings stay
+ * user-editable from Settings; this just supplies the envelope around them.
+ *
+ * Uses `org.json` (built into the Android platform) rather than a JSON
+ * library dependency, since nothing here needs more than building a couple of
+ * small, fixed-shape objects.
  */
 object OutgoingMessages {
 
-    fun addObstacle(obstacle: Obstacle): String =
-        "ADD,B${obstacle.id},(${obstacle.x},${obstacle.y})"
+    const val MODE_IMAGE_RECOGNITION = "0"
+    const val MODE_FASTEST_PATH = "1"
 
-    fun removeObstacle(obstacleId: Int): String = "SUB,B$obstacleId"
+    /** Sent as the `d` field for an obstacle with no target face annotated yet. */
+    const val NO_FACE_CODE = -1
 
-    fun targetFace(obstacleId: Int, face: Direction?): String =
-        "FACE,B$obstacleId,${face?.code ?: "NONE"}"
-
-    fun robotPose(robot: Robot): String =
-        "ROBOT,${robot.x},${robot.y},${robot.facing.code}"
-
-    /** One `ADD` line per obstacle, for re-sending the whole map in one go. */
-    fun fullMap(obstacles: List<Obstacle>): List<String> = buildList {
+    fun obstaclesMessage(obstacles: List<Obstacle>, mode: String): String {
+        val obstaclesArray = JSONArray()
         obstacles.sortedBy { it.id }.forEach { obstacle ->
-            add(addObstacle(obstacle))
-            obstacle.targetFace?.let { add(targetFace(obstacle.id, it)) }
+            obstaclesArray.put(
+                JSONObject()
+                    .put("x", obstacle.x)
+                    .put("y", obstacle.y)
+                    .put("id", obstacle.id)
+                    .put("d", obstacle.targetFace?.let(::directionCode) ?: NO_FACE_CODE),
+            )
         }
+        val value = JSONObject()
+            .put("obstacles", obstaclesArray)
+            .put("mode", mode)
+        return JSONObject()
+            .put("cat", "obstacles")
+            .put("value", value)
+            .toString()
+    }
+
+    fun controlMessage(command: String): String =
+        JSONObject().put("cat", "control").put("value", command).toString()
+
+    fun manualMessage(command: String): String =
+        JSONObject().put("cat", "manual").put("value", command).toString()
+
+    /** N=0, E=2, S=4, W=6 - the team's direction-code convention for the `d` field. */
+    fun directionCode(direction: Direction): Int = when (direction) {
+        Direction.NORTH -> 0
+        Direction.EAST -> 2
+        Direction.SOUTH -> 4
+        Direction.WEST -> 6
     }
 }

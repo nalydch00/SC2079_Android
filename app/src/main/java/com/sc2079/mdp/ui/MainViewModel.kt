@@ -6,6 +6,7 @@ import com.sc2079.mdp.model.Direction
 import com.sc2079.mdp.model.Obstacle
 import com.sc2079.mdp.protocol.IncomingMessage
 import com.sc2079.mdp.protocol.MessageParser
+import com.sc2079.mdp.protocol.OutgoingMessages
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +32,16 @@ class MainViewModel : ViewModel() {
 
     private val _selectedObstacleId = MutableStateFlow<Int?>(null)
     val selectedObstacleId: StateFlow<Int?> = _selectedObstacleId.asStateFlow()
+
+    private val _mode = MutableStateFlow(OutgoingMessages.MODE_IMAGE_RECOGNITION)
+
+    /** The task mode sent alongside every `obstacles` message - set by whichever
+     *  of Image rec. / Fastest path was last started. */
+    val mode: StateFlow<String> = _mode.asStateFlow()
+
+    fun setMode(mode: String) {
+        _mode.value = mode
+    }
 
     fun select(id: Int?) {
         _selectedObstacleId.value = id
