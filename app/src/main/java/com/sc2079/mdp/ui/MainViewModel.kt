@@ -108,8 +108,15 @@ class MainViewModel : ViewModel() {
     }
 
     /**
-     * Applies one received line to the map and returns what it was recognised as,
-     * so the activity can decide what belongs in the status box.
+     * Applies one received line to the map, returning what it was recognised as
+     * (the activity only needs this for the raw log, since every visible effect
+     * - including the status box - happens right here).
+     *
+     * [IncomingMessage.Status] is the *only* variant allowed to touch [setStatus]
+     * - checklist C.4 wants the box showing selective updates, not a running
+     * commentary derived from every other message. Keeping that call in this one
+     * place (rather than left to whoever handles the return value) is what makes
+     * that exclusivity a guarantee instead of a convention someone can forget.
      */
     fun applyIncoming(line: String): IncomingMessage {
         val message = MessageParser.parse(line)
@@ -120,7 +127,7 @@ class MainViewModel : ViewModel() {
             is IncomingMessage.TargetUpdate ->
                 _arena.value = _arena.value.setTargetId(message.obstacleId, message.targetId, message.face)
 
-            is IncomingMessage.Status -> Unit
+            is IncomingMessage.Status -> setStatus(message.text)
             is IncomingMessage.Unknown -> Unit
         }
         return message

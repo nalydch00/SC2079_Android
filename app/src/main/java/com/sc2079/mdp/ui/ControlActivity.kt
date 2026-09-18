@@ -21,7 +21,6 @@ import com.sc2079.mdp.databinding.ActivityControlBinding
 import com.sc2079.mdp.model.Arena
 import com.sc2079.mdp.model.Direction
 import com.sc2079.mdp.model.Obstacle
-import com.sc2079.mdp.protocol.IncomingMessage
 import com.sc2079.mdp.protocol.OutgoingMessages
 import com.sc2079.mdp.util.Prefs
 import kotlinx.coroutines.flow.collectLatest
@@ -211,22 +210,14 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
         }
     }
 
-    /** Checklist C.1, C.4, C.9, C.10: one received line, applied to the GUI. */
+    /**
+     * Checklist C.1, C.9, C.10: one received line, applied to the map. The
+     * status box (C.4) is deliberately not touched here - only a `STATUS`/`MSG`
+     * message can update it, enforced inside [MainViewModel.applyIncoming].
+     */
     private fun onIncomingLine(line: String) {
         viewModel.logLine("<<", line)
-        when (val message = viewModel.applyIncoming(line)) {
-            is IncomingMessage.Status -> viewModel.setStatus(message.text)
-            is IncomingMessage.RobotUpdate -> viewModel.setStatus(
-                "Robot at (${message.x}, ${message.y}) facing ${message.facing.code}",
-            )
-            is IncomingMessage.TargetUpdate -> viewModel.setStatus(
-                "Obstacle ${message.obstacleId}: target ${message.targetId}" +
-                    (message.face?.let { " on ${it.code}" } ?: ""),
-            )
-            // Unrecognised traffic stays in the raw log only, so the status box
-            // keeps showing selective information (checklist C.4).
-            is IncomingMessage.Unknown -> Unit
-        }
+        viewModel.applyIncoming(line)
     }
 
     private fun onLinkEvent(message: String) {

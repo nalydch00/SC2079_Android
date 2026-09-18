@@ -51,7 +51,7 @@ each step:
 | **C.1** | Transmit and receive text over the Bluetooth serial link | `bluetooth/BluetoothController.kt`; the *Serial* box in the control panel sends free text, and everything received appears in the *Raw traffic* log |
 | **C.2** | GUI scanning, selection and connection | The **Connect** screen (`ui/ConnectionActivity.kt`) → `bluetooth/DeviceListDialogFragment.kt` (paired devices listed immediately, **Scan** appends discovered ones) |
 | **C.3** | Interactive control of robot movement | A TV-remote style arrow D-pad on the Control screen: Forward/Stop/Reverse down the centre, Turn left/right and Reverse left/right filling the full height on either side (no dead space) - six directions including diagonals, plus Stop |
-| **C.4** | Remote update & status messages | The bold **Robot status** box. It shows only recognised status/robot/target events; unrecognised traffic goes to the separate raw log |
+| **C.4** | Remote update & status messages | The bold **Robot status** box. Only a `STATUS`/`MSG` line can ever change it - `ROBOT`, `TARGET`, and anything unrecognised all update the map (or nothing) and land in the raw log, but never touch the status box |
 | **C.5** | 2D arena display with numbered obstacles and the robot | `ui/ArenaView.kt` — 20 × 20 grid with axis labels, obstacle numbers in small white text, robot drawn over its 3 × 3 footprint with a direction arrow |
 | **C.6** | Interactive placement and movement of obstacles | Tap an empty cell to add; drag to move; drag off the arena to delete. An `obstacles` message (the full current map) is transmitted when the finger lifts |
 | **C.7** | Annotate the obstacle face carrying the target | Tap an edge of an obstacle to set that face (middle clears it); or press and hold it to light up four N/E/S/W zones around it, then slide onto one without lifting and release to pick it - a bigger, friendlier target than the edge itself for small blocks; or use the N/E/S/W buttons arranged in a compass cross under *Selected obstacle*. An `obstacles` message is transmitted each time, carrying the updated face in that obstacle's `d` field |
@@ -114,8 +114,13 @@ sends whatever you type verbatim, unwrapped, for testing raw connectivity
 
 The obstacle number is accepted both bare (`2`) and prefixed (`B2`), headings
 are case-insensitive, and surrounding whitespace or brackets are ignored.
-Anything else is kept in the raw log and never reaches the status box, which is
-what C.4 asks for.
+
+**`STATUS`/`MSG` (aliases `MESSAGE`/`INFO`) are the only messages that can ever
+change the status box** - this is enforced in exactly one place,
+`MainViewModel.applyIncoming()`, rather than left to whoever reads the parsed
+result to remember. `ROBOT` and `TARGET` update the map only; anything
+unrecognised updates neither and is kept in the raw log - both are exactly
+what checklist C.4's "selective information" asks for.
 
 > This side of the protocol isn't part of the JSON schema above - if the RPi
 > also reports status/pose/target updates as JSON rather than this plain-text
@@ -142,8 +147,9 @@ run.
 1. Pair the tablet with the machine running the Android Module Tool.
 2. Tap **Connect** and pick the device (or tap **Reconnect** to reuse the last
    one). The state banner turns green on success.
-3. Send a line from the tool — `MSG,[Ready to start]`, `ROBOT,7,2,N`,
-   `TARGET,B2,11,N` — and watch the status box and map update.
+3. Send a line from the tool — `MSG,[Ready to start]` updates the status box;
+   `ROBOT,7,2,N` and `TARGET,B2,11,N` update the map only and leave the status
+   box untouched, by design.
 4. Press the movement buttons and watch the tool's command log - each shows up
    as `{"cat":"manual","value":"<token>"}`, not the bare token by itself.
 5. For C.8, hit **Disconnect** in the AMD tool. The banner turns orange
@@ -162,7 +168,10 @@ app/src/main/java/com/sc2079/mdp/
 ```
 
 The `model` and `protocol` packages deliberately avoid Android types so the
-placement rules and the wire format are covered by plain JVM tests:
+placement rules and the wire format are covered by plain JVM tests.
+`MainViewModel` (in `ui/`) is tested too, since it's the one place that
+decides what may reach the status box - it only depends on `androidx.lifecycle.ViewModel`
+and coroutines' `Flow`, neither of which needs an Android runtime to test:
 
 ```
 ./gradlew test

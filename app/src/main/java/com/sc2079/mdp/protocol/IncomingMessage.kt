@@ -5,8 +5,10 @@ import com.sc2079.mdp.model.Direction
 /**
  * A line received over the Bluetooth serial link after it has been recognised.
  *
- * Every variant keeps the [raw] text so the raw traffic log can show exactly what
- * arrived, while the status box only ever renders the summarised variants.
+ * Every variant keeps the [raw] text so the raw traffic log can show exactly
+ * what arrived. Only [Status] may ever update the "Robot status" box
+ * (checklist C.4's selective status/update message) - [RobotUpdate] and
+ * [TargetUpdate] update the map silently, and [Unknown] updates nothing.
  */
 sealed class IncomingMessage {
 
