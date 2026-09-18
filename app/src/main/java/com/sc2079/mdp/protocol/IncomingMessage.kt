@@ -30,7 +30,11 @@ sealed class IncomingMessage {
         override val raw: String,
     ) : IncomingMessage()
 
-    /** `STATUS,<text>` or `MSG,[<text>]` - checklist C.4. */
+    /**
+     * `STATUS,"<text>"` or `MSG,"<text>"` - checklist C.4. The quotes are the
+     * required terminator: only what's between them becomes [text], so
+     * anything outside the quotes is discarded rather than leaking in.
+     */
     data class Status(
         val text: String,
         override val raw: String,

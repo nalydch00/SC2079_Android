@@ -110,7 +110,7 @@ sends whatever you type verbatim, unwrapped, for testing raw connectivity
 | `ROBOT,<x>,<y>,<dir>` | Move the robot to `(x,y)` facing `dir` (`N`/`S`/`E`/`W`) |
 | `TARGET,<obstacle>,<targetId>` | Show `targetId` on that obstacle block |
 | `TARGET,<obstacle>,<targetId>,<face>` | …and mark `face` as the target face |
-| `STATUS,<text>` / `MSG,[<text>]` | Show `text` in the status box |
+| `STATUS,"<text>"` / `MSG,"<text>"` | Show `text` in the status box |
 
 The obstacle number is accepted both bare (`2`) and prefixed (`B2`), headings
 are case-insensitive, and surrounding whitespace or brackets are ignored.
@@ -121,6 +121,14 @@ change the status box** - this is enforced in exactly one place,
 result to remember. `ROBOT` and `TARGET` update the map only; anything
 unrecognised updates neither and is kept in the raw log - both are exactly
 what checklist C.4's "selective information" asks for.
+
+The status text itself must be wrapped in double quotes - that's the required
+terminator, not decoration. Only what's strictly between the first `"` and the
+next `"` becomes the status text; anything before the opening quote or after
+the closing one is discarded, and a line missing either quote isn't recognised
+as a status message at all (it falls through to the raw log like any other
+unknown line). `STATUS,"Ready to start"` and `MSG,"Ready to start"` both work;
+`STATUS,Ready to start` (no quotes) does not.
 
 > This side of the protocol isn't part of the JSON schema above - if the RPi
 > also reports status/pose/target updates as JSON rather than this plain-text
@@ -147,7 +155,7 @@ run.
 1. Pair the tablet with the machine running the Android Module Tool.
 2. Tap **Connect** and pick the device (or tap **Reconnect** to reuse the last
    one). The state banner turns green on success.
-3. Send a line from the tool — `MSG,[Ready to start]` updates the status box;
+3. Send a line from the tool — `MSG,"Ready to start"` updates the status box;
    `ROBOT,7,2,N` and `TARGET,B2,11,N` update the map only and leave the status
    box untouched, by design.
 4. Press the movement buttons and watch the tool's command log - each shows up

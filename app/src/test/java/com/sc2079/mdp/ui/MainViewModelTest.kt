@@ -13,7 +13,7 @@ class MainViewModelTest {
     @Test
     fun `a status message updates the status box`() {
         val viewModel = MainViewModel()
-        viewModel.applyIncoming("MSG,[Looking for target 2]")
+        viewModel.applyIncoming("MSG,\"Looking for target 2\"")
         assertEquals("Looking for target 2", viewModel.status.value)
     }
 
@@ -49,7 +49,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel()
         viewModel.applyIncoming("ROBOT,7,2,N")
         val afterRobotUpdate = viewModel.status.value
-        viewModel.applyIncoming("STATUS,Ready to start")
+        viewModel.applyIncoming("STATUS,\"Ready to start\"")
         assertNotEquals(afterRobotUpdate, viewModel.status.value)
         assertEquals("Ready to start", viewModel.status.value)
     }

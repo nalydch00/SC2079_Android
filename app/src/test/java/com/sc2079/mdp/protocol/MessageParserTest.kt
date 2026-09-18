@@ -66,16 +66,43 @@ class MessageParserTest {
     }
 
     @Test
-    fun `parses bracketed status messages`() {
-        val message = MessageParser.parse("MSG,[Moving]")
+    fun `parses a quoted status message`() {
+        val message = MessageParser.parse("MSG,\"Moving\"")
         assertTrue(message is IncomingMessage.Status)
         assertEquals("Moving", (message as IncomingMessage.Status).text)
     }
 
     @Test
-    fun `keeps commas inside a status body`() {
-        val message = MessageParser.parse("STATUS,looking for target 2, standing by")
+    fun `keeps commas inside a quoted status body`() {
+        val message = MessageParser.parse("STATUS,\"looking for target 2, standing by\"")
         assertEquals("looking for target 2, standing by", (message as IncomingMessage.Status).text)
+    }
+
+    @Test
+    fun `discards anything before the opening quote`() {
+        val message = MessageParser.parse("STATUS,garbage\"Ready to start\"")
+        assertEquals("Ready to start", (message as IncomingMessage.Status).text)
+    }
+
+    @Test
+    fun `discards anything after the closing quote`() {
+        val message = MessageParser.parse("STATUS,\"Ready to start\"garbage,extra,fields")
+        assertEquals("Ready to start", (message as IncomingMessage.Status).text)
+    }
+
+    @Test
+    fun `an unquoted status body is not recognised`() {
+        assertTrue(MessageParser.parse("STATUS,Ready to start") is IncomingMessage.Unknown)
+    }
+
+    @Test
+    fun `a half-quoted status body is not recognised`() {
+        assertTrue(MessageParser.parse("STATUS,\"Ready to start") is IncomingMessage.Unknown)
+    }
+
+    @Test
+    fun `the old bracket format no longer counts as a status message`() {
+        assertTrue(MessageParser.parse("MSG,[Moving]") is IncomingMessage.Unknown)
     }
 
     @Test
