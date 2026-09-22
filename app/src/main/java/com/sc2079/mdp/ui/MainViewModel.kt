@@ -128,6 +128,7 @@ class MainViewModel : ViewModel() {
                 _arena.value = _arena.value.setTargetId(message.obstacleId, message.targetId, message.face)
 
             is IncomingMessage.Status -> setStatus(message.text)
+            is IncomingMessage.ModeUpdate -> Unit
             is IncomingMessage.Unknown -> Unit
         }
         return message

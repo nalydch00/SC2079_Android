@@ -11,7 +11,7 @@ import org.json.JSONObject
  * ```
  * {"cat":"obstacles","value":{"obstacles":[{"x":5,"y":10,"id":1,"d":2}],"mode":"0"}}
  * {"cat":"control","value":"start"}
- * {"cat":"manual","value":"FW01"}
+ * {"cat":"manual","value":"FW010"}
  * ```
  *
  * "obstacles" always carries the *complete* current map, not a diff - so

@@ -63,7 +63,7 @@ data class Arena(
     }
 
     /**
-     * Applies a `TARGET,...` update from the robot. A `null` [face] keeps whatever
+     * Applies an `image-rec` update from the RPi. A `null` [face] keeps whatever
      * face the user already annotated (checklist C.9 allows the face to be omitted).
      */
     fun setTargetId(id: Int, targetId: String?, face: Direction? = null): Arena {

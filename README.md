@@ -51,23 +51,23 @@ each step:
 | **C.1** | Transmit and receive text over the Bluetooth serial link | `bluetooth/BluetoothController.kt`; the *Serial* box in the control panel sends free text, and everything received appears in the *Raw traffic* log |
 | **C.2** | GUI scanning, selection and connection | The **Connect** screen (`ui/ConnectionActivity.kt`) → `bluetooth/DeviceListDialogFragment.kt` (paired devices listed immediately, **Scan** appends discovered ones) |
 | **C.3** | Interactive control of robot movement | A TV-remote style arrow D-pad on the Control screen: Forward/Stop/Reverse down the centre, Turn left/right and Reverse left/right filling the full height on either side (no dead space) - six directions including diagonals, plus Stop |
-| **C.4** | Remote update & status messages | The bold **Robot status** box. Only a `STATUS`/`MSG` line can ever change it - `ROBOT`, `TARGET`, and anything unrecognised all update the map (or nothing) and land in the raw log, but never touch the status box |
+| **C.4** | Remote update & status messages | The bold **Robot status** box. Only an `info`/`error`/`status` message can ever change it - `location`, `image-rec`, `mode`, and anything unrecognised all update the map (or nothing) and land in the raw log, but never touch the status box |
 | **C.5** | 2D arena display with numbered obstacles and the robot | `ui/ArenaView.kt` — 20 × 20 grid with axis labels, obstacle numbers in small white text, robot drawn over its 3 × 3 footprint with a direction arrow |
 | **C.6** | Interactive placement and movement of obstacles | Tap an empty cell to add; drag to move; drag off the arena to delete. An `obstacles` message (the full current map) is transmitted when the finger lifts |
 | **C.7** | Annotate the obstacle face carrying the target | Tap an edge of an obstacle to set that face (middle clears it); or press and hold it to light up four N/E/S/W zones around it, then slide onto one without lifting and release to pick it - a bigger, friendlier target than the edge itself for small blocks; or use the N/E/S/W buttons arranged in a compass cross under *Selected obstacle*. An `obstacles` message is transmitted each time, carrying the updated face in that obstacle's `d` field |
 | **C.8** | Robust connectivity, automatic re-establishment | `BluetoothController` runs a retrying client loop **and** an RFCOMM server socket at the same time, so the link comes back whether the tablet or the robot re-initiates |
-| **C.9** | Display image target ID on obstacle blocks | `TARGET,...` repaints the block green with the target ID in large white text, plus a thick red bar on the target face |
-| **C.10** | Update robot position and facing direction | `ROBOT,<x>,<y>,<dir>` moves and rotates the robot icon |
+| **C.9** | Display image target ID on obstacle blocks | An `image-rec` message repaints the block green with the target ID in large white text, plus a thick red bar on the target face |
+| **C.10** | Update robot position and facing direction | A `location` message moves and rotates the robot icon |
 
 ## Message protocol
 
 Coordinates use a bottom-left origin: `(0,0)` is the bottom-left cell, `x` grows
-east, `y` grows north. Every transmitted line is terminated with `\n`.
-
-The two directions use different formats, matching how each side of the link
-was actually specified: outgoing (tablet → RPi) is JSON with a fixed `cat`/
-`value` envelope; incoming (RPi/robot → tablet) is the plain comma-separated
-text the checklist leaves up to the Android team to devise.
+east, `y` grows north. Every line, in both directions, is a single JSON object
+with a fixed `cat`/`value` envelope, UTF-8, terminated with `\n` - the RPi
+forwards STM32 tokens unchanged and otherwise speaks only this envelope, so
+the app never emits or expects the older ARCM plain-text lines
+(`ADD,B1,(x,y)`, `ROBOT,...`, `STATUS,"..."`) from earlier drafts of this
+protocol.
 
 ### Transmitted by the tablet (JSON)
 
@@ -80,7 +80,7 @@ text the checklist leaves up to the Android team to devise.
 ```json
 {"cat":"obstacles","value":{"obstacles":[{"x":5,"y":10,"id":1,"d":2}],"mode":"0"}}
 {"cat":"control","value":"start"}
-{"cat":"manual","value":"f"}
+{"cat":"manual","value":"FW010"}
 ```
 
 Built with `OutgoingMessages.kt` (`org.json`, part of the Android platform - no
@@ -95,45 +95,67 @@ is `"0"` for Image recognition and `"1"` for Fastest path
 (`OutgoingMessages.MODE_IMAGE_RECOGNITION` / `MODE_FASTEST_PATH`), tracked in
 `MainViewModel` and set by whichever of the two Start buttons was last pressed.
 
-Movement tokens (the `manual` value) default to `f`, `r`, `tl`, `tr`, `rl`,
-`rr`, `s` and are editable at runtime from the overflow menu
-(**Movement commands**), so the app can match whatever STM command strings the
-team settles on without a rebuild - the JSON envelope around them is fixed,
-only the token content is configurable. The free-text **Serial** box (Log tab)
-sends whatever you type verbatim, unwrapped, for testing raw connectivity
-(checklist C.1) against something like the AMD tool.
+Movement tokens (the `manual` value) default to the STM32 wire tokens
+`FW010`/`BW010`/`TL090`/`TR090`/`BL090`/`BR090`/`STOP` and are editable at
+runtime from the overflow menu (**Movement commands**), so the app can match
+whatever command strings the STM32 firmware actually expects without a
+rebuild - the JSON envelope around them is fixed, only the token content is
+configurable. Of these, `FW010`/`BW010`/`TL090`/`TR090`/`STOP` come directly
+from the RPi integration brief; `BL090`/`BR090` (reverse-left/reverse-right,
+this app's two diagonal-reverse D-pad buttons) aren't covered by that brief
+and are this app's own naming, kept consistent with the others - confirm
+these two with the STM32/RPi team rather than assuming them. The free-text
+**Serial** box (Log tab) sends whatever you type verbatim, unwrapped, for
+testing raw connectivity (checklist C.1) against something like the AMD tool.
 
-### Received from the robot (plain text)
+### Received from the robot (JSON)
 
-| Message | Effect |
-|---|---|
-| `ROBOT,<x>,<y>,<dir>` | Move the robot to `(x,y)` facing `dir` (`N`/`S`/`E`/`W`) |
-| `TARGET,<obstacle>,<targetId>` | Show `targetId` on that obstacle block |
-| `TARGET,<obstacle>,<targetId>,<face>` | …and mark `face` as the target face |
-| `STATUS,"<text>"` / `MSG,"<text>"` | Show `text` in the status box |
+| `cat` | `value` | Effect |
+|---|---|---|
+| `info` / `error` / `status` | `"<text>"` | Show `text` in the status box |
+| `location` | `{"x":<int>,"y":<int>,"d":<heading>}` | Move the robot to `(x,y)` facing `d` |
+| `image-rec` | `{"obstacle_id":<int>,"image_id":<id>}` | Show `image_id` on that obstacle block |
+| `mode` | `"<mode>"` | Recognised, currently no UI effect (optional per the brief) |
 
-The obstacle number is accepted both bare (`2`) and prefixed (`B2`), headings
-are case-insensitive, and surrounding whitespace or brackets are ignored.
+```json
+{"cat":"status","value":"Ready to start"}
+{"cat":"location","value":{"x":7,"y":2,"d":0}}
+{"cat":"image-rec","value":{"obstacle_id":2,"image_id":"11"}}
+```
 
-**`STATUS`/`MSG` (aliases `MESSAGE`/`INFO`) are the only messages that can ever
-change the status box** - this is enforced in exactly one place,
+`d` (and `image-rec`'s optional `face`) accepts a heading letter (`N`/`E`/`S`/
+`W`), this app's own outgoing obstacle-face code (`N=0,E=2,S=4,W=6`), or
+degrees (`N=0,E=90,S=180,W=270`). `image-rec`'s field names
+(`obstacle_id`/`image_id`) are **this app's assumption**, not something the
+brief pinned down precisely - `obstacleId`/`id` and
+`imageId`/`target_id`/`targetId` are also accepted, but confirm the RPi's
+actual field names with the team and adjust `MessageParser.parseImageRec()`
+if they differ. The obstacle number is accepted both bare (`2`) and prefixed
+(`B2`).
+
+**Only `info`/`error`/`status` are the messages that can ever change the
+status box** - this is enforced in exactly one place,
 `MainViewModel.applyIncoming()`, rather than left to whoever reads the parsed
-result to remember. `ROBOT` and `TARGET` update the map only; anything
-unrecognised updates neither and is kept in the raw log - both are exactly
-what checklist C.4's "selective information" asks for.
+result to remember. `location`, `image-rec`, and `mode` update the map (or
+nothing) only; anything that isn't valid JSON, or whose `cat` isn't one of
+the above, updates nothing and is kept in the raw log - both are exactly what
+checklist C.4's "selective information" asks for. Every value is a real JSON
+string, so JSON's own quoting is the terminator: there's no risk of stray
+text before or after a status message leaking into the box, the way there
+would be with a hand-rolled delimiter.
 
-The status text itself must be wrapped in double quotes - that's the required
-terminator, not decoration. Only what's strictly between the first `"` and the
-next `"` becomes the status text; anything before the opening quote or after
-the closing one is discarded, and a line missing either quote isn't recognised
-as a status message at all (it falls through to the raw log like any other
-unknown line). `STATUS,"Ready to start"` and `MSG,"Ready to start"` both work;
-`STATUS,Ready to start` (no quotes) does not.
+## Bluetooth pairing
 
-> This side of the protocol isn't part of the JSON schema above - if the RPi
-> also reports status/pose/target updates as JSON rather than this plain-text
-> format, `MessageParser.kt` needs a matching update; ask before assuming
-> either way.
+Pair the tablet with the RPi (advertised as **MDP-Group6-RPi**) like any other
+Bluetooth device, then pick it from the **Connect** screen's device list.
+`BluetoothController`'s outgoing connection attempts try the RPi's own
+advertised SPP service UUID (`94f39d29-7d6d-437d-973b-fba39e49d4ee`) before
+falling back to the classic Serial Port Profile UUID
+(`00001101-0000-1000-8000-00805F9B34FB`) and then a hidden channel-1 socket,
+so a device whose SDP record is only registered under the RPi's own UUID
+still resolves. STM32 ACK/`INV` traffic is handled entirely on the RPi side;
+the tablet only ever sees the RPi's `info`/`error`/`status`/`location`/
+`image-rec`/`mode` JSON.
 
 ## Using the map
 
@@ -155,9 +177,10 @@ run.
 1. Pair the tablet with the machine running the Android Module Tool.
 2. Tap **Connect** and pick the device (or tap **Reconnect** to reuse the last
    one). The state banner turns green on success.
-3. Send a line from the tool — `MSG,"Ready to start"` updates the status box;
-   `ROBOT,7,2,N` and `TARGET,B2,11,N` update the map only and leave the status
-   box untouched, by design.
+3. Send a line from the tool — `{"cat":"status","value":"Ready to start"}`
+   updates the status box; `{"cat":"location","value":{"x":7,"y":2,"d":0}}` and
+   `{"cat":"image-rec","value":{"obstacle_id":2,"image_id":"11"}}` update the
+   map only and leave the status box untouched, by design.
 4. Press the movement buttons and watch the tool's command log - each shows up
    as `{"cat":"manual","value":"<token>"}`, not the bare token by itself.
 5. For C.8, hit **Disconnect** in the AMD tool. The banner turns orange

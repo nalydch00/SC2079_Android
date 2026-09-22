@@ -34,13 +34,13 @@ class Prefs(context: Context) {
      * instead of being baked into the buttons.
      */
     enum class CommandAction(val key: String, val label: String, val default: String) {
-        FORWARD("cmd_forward", "Forward", "f"),
-        REVERSE("cmd_reverse", "Reverse", "r"),
-        TURN_LEFT("cmd_turn_left", "Turn left", "tl"),
-        TURN_RIGHT("cmd_turn_right", "Turn right", "tr"),
-        REVERSE_LEFT("cmd_reverse_left", "Reverse left", "rl"),
-        REVERSE_RIGHT("cmd_reverse_right", "Reverse right", "rr"),
-        STOP("cmd_stop", "Stop", "s"),
+        FORWARD("cmd_forward", "Forward", "FW010"),
+        REVERSE("cmd_reverse", "Reverse", "BW010"),
+        TURN_LEFT("cmd_turn_left", "Turn left", "TL090"),
+        TURN_RIGHT("cmd_turn_right", "Turn right", "TR090"),
+        REVERSE_LEFT("cmd_reverse_left", "Reverse left", "BL090"),
+        REVERSE_RIGHT("cmd_reverse_right", "Reverse right", "BR090"),
+        STOP("cmd_stop", "Stop", "STOP"),
     }
 
     private companion object {

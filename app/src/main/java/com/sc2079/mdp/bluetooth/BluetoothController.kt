@@ -253,19 +253,25 @@ class BluetoothController private constructor(context: Context) {
         }
 
         /**
-         * Opens an RFCOMM socket, falling back to the hidden channel-1 factory that
-         * some HC-05 style modules need when the SPP service record is missing.
+         * Opens an RFCOMM socket, trying the RPi's own advertised service UUID
+         * before the classic SPP one (the RPi's SDP record may only be registered
+         * under [RPI_SERVICE_UUID], in which case connecting with [SPP_UUID] alone
+         * would never find it), then falling back to the hidden channel-1 factory
+         * that some HC-05 style modules need when no service record matches at all.
          */
         private fun openSocket(): BluetoothSocket? {
             runCatching { adapter?.cancelDiscovery() }
-            try {
-                val secure = device.createRfcommSocketToServiceRecord(SPP_UUID)
-                socket = secure
-                secure.connect()
-                return secure
-            } catch (e: IOException) {
-                Log.d(TAG, "Secure RFCOMM connect failed", e)
-                runCatching { socket?.close() }
+            for (uuid in SERVICE_UUIDS) {
+                if (cancelled) return null
+                try {
+                    val secure = device.createRfcommSocketToServiceRecord(uuid)
+                    socket = secure
+                    secure.connect()
+                    return secure
+                } catch (e: IOException) {
+                    Log.d(TAG, "Secure RFCOMM connect via $uuid failed", e)
+                    runCatching { socket?.close() }
+                }
             }
             if (cancelled) return null
             return try {
@@ -429,6 +435,12 @@ class BluetoothController private constructor(context: Context) {
 
         /** Well known Serial Port Profile UUID. */
         val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+
+        /** Service UUID the RPi (MDP-Group6-RPi) advertises for its SPP socket. */
+        val RPI_SERVICE_UUID: UUID = UUID.fromString("94f39d29-7d6d-437d-973b-fba39e49d4ee")
+
+        /** Tried in order when connecting as a client - the RPi's own UUID first. */
+        private val SERVICE_UUIDS = listOf(RPI_SERVICE_UUID, SPP_UUID)
 
         @Volatile
         private var instance: BluetoothController? = null
