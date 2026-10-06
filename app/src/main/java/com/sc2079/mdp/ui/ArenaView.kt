@@ -71,6 +71,13 @@ class ArenaView @JvmOverloads constructor(
             invalidate()
         }
 
+    /** Poses the robot reported, oldest first, drawn as a line under the robot. */
+    var trace: List<Robot> = emptyList()
+        set(value) {
+            field = value
+            invalidate()
+        }
+
     private val density = resources.displayMetrics.density
 
     private val arenaPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -119,6 +126,17 @@ class ArenaView @JvmOverloads constructor(
         isFakeBoldText = true
     }
 
+    private val tracePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        color = COLOR_TRACE
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
+    private val traceDotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = COLOR_TRACE
+    }
+
     private var cellSize = 0f
     private var gutter = 0f
     private var gridLeft = 0f
@@ -126,6 +144,7 @@ class ArenaView @JvmOverloads constructor(
 
     private val cellRect = RectF()
     private val robotPath = Path()
+    private val tracePath = Path()
 
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     private var downX = 0f
@@ -191,6 +210,7 @@ class ArenaView @JvmOverloads constructor(
         canvas.drawRect(gridLeft, gridTop, gridRight, gridBottom, arenaPaint)
         drawGrid(canvas, gridRight, gridBottom)
         drawAxisLabels(canvas, gridBottom)
+        drawTrace(canvas)
         drawRobot(canvas)
         arena.obstacles.forEach { obstacle ->
             if (obstacle.id == dragObstacleId && dragging) return@forEach
@@ -222,6 +242,20 @@ class ArenaView @JvmOverloads constructor(
             val centerX = gridLeft + x * cellSize + cellSize / 2f
             canvas.drawText(x.toString(), centerX, gridBottom + gutter * 0.62f, labelPaint)
         }
+    }
+
+    /** Joins the centre cell of each reported pose, with a dot at every stop. */
+    private fun drawTrace(canvas: Canvas) {
+        if (trace.isEmpty()) return
+        tracePaint.strokeWidth = cellSize * 0.12f
+        tracePath.reset()
+        trace.forEachIndexed { index, pose ->
+            val x = gridLeft + pose.x * cellSize + cellSize / 2f
+            val y = gridTop + (arena.rows - 1 - pose.y) * cellSize + cellSize / 2f
+            if (index == 0) tracePath.moveTo(x, y) else tracePath.lineTo(x, y)
+            canvas.drawCircle(x, y, cellSize * 0.14f, traceDotPaint)
+        }
+        canvas.drawPath(tracePath, tracePaint)
     }
 
     private fun drawRobot(canvas: Canvas) {
@@ -539,6 +573,7 @@ class ArenaView @JvmOverloads constructor(
         val COLOR_SELECTION = Color.parseColor("#FFC107")
         val COLOR_ROBOT = Color.parseColor("#F0A44C")
         val COLOR_ROBOT_HEAD = Color.parseColor("#37687F")
+        val COLOR_TRACE = Color.parseColor("#B36A1B9A")
         val COLOR_PICKER_IDLE = Color.parseColor("#99F0A44C")
         val COLOR_PICKER_HOVER = Color.parseColor("#FFFFC107")
     }

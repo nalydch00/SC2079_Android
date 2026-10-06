@@ -12,6 +12,10 @@
     <string name="tab_control">Control</string>
     <string name="tab_obstacles">Obstacles</string>
     <string name="tab_log">Log</string>
+    <string name="tab_trace">Trace</string>
+    <string name="section_trace">Robot trace</string>
+    <string name="trace_empty">No moves yet. Positions appear here as the robot reports them.</string>
+    <string name="trace_header">"  #    x    y  facing"</string>
 
     <string name="connect">Connect</string>
     <string name="listen">Reconnect</string>

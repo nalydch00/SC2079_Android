@@ -11,7 +11,7 @@ data class Arena(
     val columns: Int = DEFAULT_SIZE,
     val rows: Int = DEFAULT_SIZE,
     val obstacles: List<Obstacle> = emptyList(),
-    val robot: Robot = Robot(1, 1, Direction.NORTH),
+    val robot: Robot = START_ROBOT,
 ) {
 
     fun isInside(x: Int, y: Int): Boolean = x in 0 until columns && y in 0 until rows
@@ -74,7 +74,8 @@ data class Arena(
     fun withRobot(x: Int, y: Int, facing: Direction): Arena =
         copy(robot = Robot(x.coerceIn(0, columns - 1), y.coerceIn(0, rows - 1), facing))
 
-    fun cleared(): Arena = copy(obstacles = emptyList())
+    /** Empties the map and puts the robot back at [START_ROBOT]. */
+    fun cleared(): Arena = copy(obstacles = emptyList(), robot = START_ROBOT)
 
     private fun replace(obstacle: Obstacle): Arena =
         copy(obstacles = obstacles.map { if (it.id == obstacle.id) obstacle else it })
@@ -82,5 +83,8 @@ data class Arena(
     companion object {
         /** The SC2079 competition arena is a 20 x 20 grid of 10 cm cells. */
         const val DEFAULT_SIZE = 20
+
+        /** Bottom-left corner facing north: the 3x3 footprint covers cells 0-2 on both axes. */
+        val START_ROBOT = Robot(1, 1, Direction.NORTH)
     }
 }

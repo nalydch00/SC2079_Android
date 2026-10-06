@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.sc2079.mdp.model.Arena
 import com.sc2079.mdp.model.Direction
 import com.sc2079.mdp.model.Obstacle
+import com.sc2079.mdp.model.Robot
 import com.sc2079.mdp.protocol.IncomingMessage
 import com.sc2079.mdp.protocol.MessageParser
 import com.sc2079.mdp.protocol.OutgoingMessages
@@ -29,6 +30,11 @@ class MainViewModel : ViewModel() {
 
     /** Full raw traffic, kept separate from the status box. */
     val log: StateFlow<List<String>> = _log.asStateFlow()
+
+    private val _trace = MutableStateFlow<List<Robot>>(emptyList())
+
+    /** Every pose the robot reported over the link, oldest first; wiped by [clearArena]. */
+    val trace: StateFlow<List<Robot>> = _trace.asStateFlow()
 
     private val _selectedObstacleId = MutableStateFlow<Int?>(null)
     val selectedObstacleId: StateFlow<Int?> = _selectedObstacleId.asStateFlow()
@@ -86,12 +92,14 @@ class MainViewModel : ViewModel() {
     fun clearArena() {
         _arena.value = _arena.value.cleared()
         _selectedObstacleId.value = null
+        _trace.value = emptyList()
         setStatus(DEFAULT_STATUS)
     }
 
     fun resizeArena(columns: Int, rows: Int) {
         _arena.value = Arena(columns = columns, rows = rows)
         _selectedObstacleId.value = null
+        _trace.value = emptyList()
     }
 
     fun setStatus(text: String) {
@@ -124,8 +132,11 @@ class MainViewModel : ViewModel() {
     fun applyIncoming(line: String): IncomingMessage {
         val message = MessageParser.parse(line)
         when (message) {
-            is IncomingMessage.RobotUpdate ->
+            is IncomingMessage.RobotUpdate -> {
+                val from = _arena.value.robot
                 _arena.value = _arena.value.withRobot(message.x, message.y, message.facing)
+                recordTrace(from, _arena.value.robot)
+            }
 
             is IncomingMessage.ImageRecognised -> {
                 // Used once: a result with no fresh announcement is dropped rather
@@ -144,6 +155,12 @@ class MainViewModel : ViewModel() {
             is IncomingMessage.Unknown -> Unit
         }
         return message
+    }
+
+    /** A fresh trace starts from where the robot stood when its first move arrived. */
+    private fun recordTrace(from: Robot, to: Robot) {
+        val trace = _trace.value.ifEmpty { listOf(from) }
+        _trace.value = if (trace.last() == to) trace else trace + to
     }
 
     private companion object {

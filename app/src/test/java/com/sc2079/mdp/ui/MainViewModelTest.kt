@@ -1,8 +1,11 @@
 package com.sc2079.mdp.ui
 
+import com.sc2079.mdp.model.Direction
+import com.sc2079.mdp.model.Robot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -92,6 +95,39 @@ class MainViewModelTest {
         assertNotEquals(afterRobotUpdate, viewModel.status.value)
         assertEquals("Ready to start", viewModel.status.value)
     }
+
+    @Test
+    fun `the trace records each reported move, starting from where the robot stood`() {
+        val viewModel = MainViewModel()
+        viewModel.applyIncoming(location(1, 5, 0))
+        viewModel.applyIncoming(location(4, 5, 2))
+        assertEquals(
+            listOf(Robot(1, 1, Direction.NORTH), Robot(1, 5, Direction.NORTH), Robot(4, 5, Direction.EAST)),
+            viewModel.trace.value,
+        )
+    }
+
+    @Test
+    fun `a repeated pose is recorded once`() {
+        val viewModel = MainViewModel()
+        viewModel.applyIncoming(location(1, 5, 0))
+        viewModel.applyIncoming(location(1, 5, 0))
+        assertEquals(2, viewModel.trace.value.size)
+    }
+
+    @Test
+    fun `clear map resets the robot to the start and wipes the trace`() {
+        val viewModel = MainViewModel()
+        viewModel.addObstacle(5, 5)
+        viewModel.applyIncoming(location(4, 5, 2))
+        viewModel.clearArena()
+        assertEquals(Robot(1, 1, Direction.NORTH), viewModel.arena.value.robot)
+        assertTrue(viewModel.arena.value.obstacles.isEmpty())
+        assertTrue(viewModel.trace.value.isEmpty())
+    }
+
+    private fun location(x: Int, y: Int, d: Int) =
+        """{"cat":"location","value":{"x":$x,"y":$y,"d":$d}}"""
 
     private fun capturing(obstacleId: Int) =
         """{"cat":"info","value":"Capturing image for obstacle id: $obstacleId"}"""

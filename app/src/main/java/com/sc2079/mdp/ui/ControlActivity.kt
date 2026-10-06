@@ -21,6 +21,7 @@ import com.sc2079.mdp.databinding.ActivityControlBinding
 import com.sc2079.mdp.model.Arena
 import com.sc2079.mdp.model.Direction
 import com.sc2079.mdp.model.Obstacle
+import com.sc2079.mdp.model.Robot
 import com.sc2079.mdp.protocol.OutgoingMessages
 import com.sc2079.mdp.util.Prefs
 import kotlinx.coroutines.flow.collectLatest
@@ -63,13 +64,14 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
     // ---------------------------------------------------------------- wiring
 
     /**
-     * Three fixed tabs stand in for what used to be one long scrolling panel:
+     * Four fixed tabs stand in for what used to be one long scrolling panel:
      * Control (drive the robot), Obstacles (set up the map), Log (raw traffic /
-     * manual serial testing). Only one page is visible at a time; the arena map
-     * itself sits outside this panel and stays visible regardless of tab.
+     * manual serial testing), Trace (the path the robot has taken). Only one
+     * page is visible at a time; the arena map itself sits outside this panel
+     * and stays visible regardless of tab.
      */
     private fun wireTabs() = with(binding.controls) {
-        val pages = listOf(pageControl, pageObstacles, pageLog)
+        val pages = listOf(pageControl, pageObstacles, pageLog, pageTrace)
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
                 pages.forEachIndexed { index, page -> page.visibility = if (index == tab.position) View.VISIBLE else View.GONE }
@@ -152,6 +154,7 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
                 launch { viewModel.arena.collectLatest(::renderArena) }
                 launch { viewModel.status.collectLatest { binding.controls.statusText.text = it } }
                 launch { viewModel.log.collectLatest(::renderLog) }
+                launch { viewModel.trace.collectLatest(::renderTrace) }
                 launch { viewModel.selectedObstacleId.collectLatest { renderSelection() } }
                 launch { bluetooth.state.collectLatest(::renderToolbarSubtitle) }
                 launch { bluetooth.remoteName.collectLatest { renderToolbarSubtitle(bluetooth.state.value) } }
@@ -191,6 +194,21 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
     private fun renderLog(lines: List<String>) {
         binding.controls.logText.text =
             if (lines.isEmpty()) getString(R.string.log_empty) else lines.takeLast(LOG_LINES_SHOWN).joinToString("\n")
+    }
+
+    private fun renderTrace(trace: List<Robot>) {
+        binding.arenaView.trace = trace
+        val controls = binding.controls
+        controls.traceText.text = if (trace.isEmpty()) {
+            getString(R.string.trace_empty)
+        } else {
+            val rows = trace.mapIndexed { index, pose ->
+                "${(index + 1).toString().padStart(3)}  ${pose.x.toString().padStart(3)}  " +
+                    "${pose.y.toString().padStart(3)}    ${pose.facing.code}"
+            }
+            (listOf(getString(R.string.trace_header)) + rows).joinToString("\n")
+        }
+        controls.traceScroll.post { controls.traceScroll.fullScroll(View.FOCUS_DOWN) }
     }
 
     /**

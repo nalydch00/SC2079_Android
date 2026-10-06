@@ -94,4 +94,12 @@ class ArenaTest {
         assertEquals(0, arena.robot.y)
         assertEquals(Direction.SOUTH, arena.robot.facing)
     }
+
+    @Test
+    fun `clearing the map removes obstacles and puts the robot back at the start`() {
+        val (withObstacle, _) = Arena().addObstacle(5, 5)!!
+        val cleared = withObstacle.withRobot(12, 9, Direction.EAST).cleared()
+        assertTrue(cleared.obstacles.isEmpty())
+        assertEquals(Robot(1, 1, Direction.NORTH), cleared.robot)
+    }
 }

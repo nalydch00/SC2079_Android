@@ -25,14 +25,20 @@ each step:
    **Disconnect** in the overflow menu is the explicit way back to the Connect
    screen.
 
-   The panel is three fixed tabs instead of one long scrolling list, so nothing
+   The panel is four fixed tabs instead of one long scrolling list, so nothing
    needs to be scrolled to reach:
    - **Control** — robot status plus the movement D-pad; what you touch while
      actually driving.
    - **Obstacles** — target-face annotation plus map-wide actions (Send all,
-     Clear map, …); used while setting the arena up.
+     Clear map, …); used while setting the arena up. **Clear map** also puts the
+     robot back at the start (bottom-left corner, facing north) and wipes the
+     trace.
    - **Log** — free-text send plus the raw traffic log; for proving connectivity
      with the AMD tool.
+   - **Trace** — every position the robot reported over the link (`location`
+     messages), numbered in order with x, y and facing. The same points are
+     joined by a purple line on the map. Positions you set by dragging the robot
+     yourself aren't recorded.
 
    The arena map itself is not part of the panel and stays visible regardless
    of which tab is selected.

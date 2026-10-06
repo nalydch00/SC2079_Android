@@ -2,7 +2,7 @@
 <!-- Tabbed instead of scrolling: each tab's content is kept short enough to
      fit on screen without a scroll, per feedback. Tab 1 is what you touch
      constantly while driving; tab 2 is map/obstacle setup; tab 3 is the
-     debugging/AMD-tool tab. -->
+     debugging/AMD-tool tab; tab 4 lists the path the robot has taken. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -36,6 +36,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/tab_log" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tab_trace" />
     </com.google.android.material.tabs.TabLayout>
 
     <FrameLayout
@@ -406,6 +411,39 @@
                 android:padding="8dp"
                 android:text="@string/log_empty"
                 android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Tab 4: Trace - every position the robot reported, in order; the
+             same points are joined by a line on the map. -->
+        <LinearLayout
+            android:id="@+id/page_trace"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:visibility="gone">
+
+            <TextView
+                style="@style/SectionHeader"
+                android:layout_marginTop="0dp"
+                android:text="@string/section_trace" />
+
+            <ScrollView
+                android:id="@+id/trace_scroll"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_log">
+
+                <TextView
+                    android:id="@+id/trace_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:padding="8dp"
+                    android:text="@string/trace_empty"
+                    android:textSize="12sp" />
+            </ScrollView>
         </LinearLayout>
     </FrameLayout>
 </LinearLayout>
