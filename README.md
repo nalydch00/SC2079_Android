@@ -114,24 +114,28 @@ testing raw connectivity (checklist C.1) against something like the AMD tool.
 |---|---|---|
 | `info` / `error` / `status` | `"<text>"` | Show `text` in the status box |
 | `location` | `{"x":<int>,"y":<int>,"d":<heading>}` | Move the robot to `(x,y)` facing `d` |
-| `image-rec` | `{"obstacle_id":<int>,"image_id":<id>}` | Show `image_id` on that obstacle block |
+| `image-rec` | `{"obstacle_id":"<class id>","image_id":"<label>",...}` | Show `image_id` on the obstacle the robot last announced (see below) |
 | `mode` | `"<mode>"` | Recognised, currently no UI effect (optional per the brief) |
 
 ```json
 {"cat":"status","value":"Ready to start"}
 {"cat":"location","value":{"x":7,"y":2,"d":0}}
-{"cat":"image-rec","value":{"obstacle_id":2,"image_id":"11"}}
+{"cat":"info","value":"Capturing image for obstacle id: 1"}
+{"cat":"image-rec","value":{"obstacle_id":"20","conf":0.92,"xyxy":[...],"image_id":"A"}}
 ```
 
-`d` (and `image-rec`'s optional `face`) accepts a heading letter (`N`/`E`/`S`/
-`W`), this app's own outgoing obstacle-face code (`N=0,E=2,S=4,W=6`), or
-degrees (`N=0,E=90,S=180,W=270`). `image-rec`'s field names
-(`obstacle_id`/`image_id`) are **this app's assumption**, not something the
-brief pinned down precisely - `obstacleId`/`id` and
-`imageId`/`target_id`/`targetId` are also accepted, but confirm the RPi's
-actual field names with the team and adjust `MessageParser.parseImageRec()`
-if they differ. The obstacle number is accepted both bare (`2`) and prefixed
-(`B2`).
+`d` accepts a heading letter (`N`/`E`/`S`/`W`), this app's own outgoing
+obstacle-face code (`N=0,E=2,S=4,W=6`), or degrees (`N=0,E=90,S=180,W=270`).
+
+**`image-rec` doesn't say which obstacle it's for.** Despite its name, the
+RPi's `obstacle_id` holds the image *class* ID (11-40, e.g. `20` for "A"), and
+`image_id` holds the label ("A"). The obstacle number only arrives in the
+`info` message the RPi sends just before it - `Capturing image for obstacle
+id: N` - so the app remembers that `N` and paints the next `image-rec`'s
+label onto obstacle `N`. Each announcement pairs with one result only; a
+result with no announcement before it is ignored rather than guessed. If the
+RPi team ever rewords that announcement, update the pattern in
+`MessageParser` (`CAPTURING_OBSTACLE`).
 
 **Only `info`/`error`/`status` are the messages that can ever change the
 status box** - this is enforced in exactly one place,
@@ -178,9 +182,12 @@ run.
 2. Tap **Connect** and pick the device (or tap **Reconnect** to reuse the last
    one). The state banner turns green on success.
 3. Send a line from the tool — `{"cat":"status","value":"Ready to start"}`
-   updates the status box; `{"cat":"location","value":{"x":7,"y":2,"d":0}}` and
-   `{"cat":"image-rec","value":{"obstacle_id":2,"image_id":"11"}}` update the
-   map only and leave the status box untouched, by design.
+   updates the status box; `{"cat":"location","value":{"x":7,"y":2,"d":0}}`
+   moves the robot and leaves the status box untouched, by design. To test
+   image results, place obstacle 1 first, then send
+   `{"cat":"info","value":"Capturing image for obstacle id: 1"}` followed by
+   `{"cat":"image-rec","value":{"obstacle_id":"20","image_id":"A"}}` - obstacle 1
+   turns green and shows "A".
 4. Press the movement buttons and watch the tool's command log - each shows up
    as `{"cat":"manual","value":"<token>"}`, not the bare token by itself.
 5. For C.8, hit **Disconnect** in the AMD tool. The banner turns orange

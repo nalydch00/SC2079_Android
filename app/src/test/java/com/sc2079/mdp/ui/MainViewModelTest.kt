@@ -2,6 +2,7 @@ package com.sc2079.mdp.ui
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
@@ -28,13 +29,42 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `a target update never touches the status box`() {
+    fun `an image result lands on the obstacle the robot said it was capturing`() {
         val viewModel = MainViewModel()
         viewModel.addObstacle(3, 3)
+        viewModel.addObstacle(5, 5)
+        viewModel.applyIncoming(capturing(2))
+        viewModel.applyIncoming(imageRec(classId = "20", label = "A"))
+        assertEquals("A", viewModel.arena.value.obstacleById(2)?.targetId)
+        assertNull(viewModel.arena.value.obstacleById(1)?.targetId)
+    }
+
+    @Test
+    fun `an image result never touches the status box`() {
+        val viewModel = MainViewModel()
+        viewModel.addObstacle(3, 3)
+        viewModel.applyIncoming(capturing(1))
         val before = viewModel.status.value
-        viewModel.applyIncoming("""{"cat":"image-rec","value":{"obstacle_id":1,"image_id":"11"}}""")
+        viewModel.applyIncoming(imageRec(classId = "20", label = "A"))
         assertEquals(before, viewModel.status.value)
-        assertEquals("11", viewModel.arena.value.obstacleById(1)?.targetId)
+    }
+
+    @Test
+    fun `an image result with no capture announcement changes nothing`() {
+        val viewModel = MainViewModel()
+        viewModel.addObstacle(3, 3)
+        viewModel.applyIncoming(imageRec(classId = "20", label = "A"))
+        assertNull(viewModel.arena.value.obstacleById(1)?.targetId)
+    }
+
+    @Test
+    fun `each capture announcement pairs with only one image result`() {
+        val viewModel = MainViewModel()
+        viewModel.addObstacle(3, 3)
+        viewModel.applyIncoming(capturing(1))
+        viewModel.applyIncoming(imageRec(classId = "20", label = "A"))
+        viewModel.applyIncoming(imageRec(classId = "21", label = "B"))
+        assertEquals("A", viewModel.arena.value.obstacleById(1)?.targetId)
     }
 
     @Test
@@ -62,4 +92,10 @@ class MainViewModelTest {
         assertNotEquals(afterRobotUpdate, viewModel.status.value)
         assertEquals("Ready to start", viewModel.status.value)
     }
+
+    private fun capturing(obstacleId: Int) =
+        """{"cat":"info","value":"Capturing image for obstacle id: $obstacleId"}"""
+
+    private fun imageRec(classId: String, label: String) =
+        """{"cat":"image-rec","value":{"obstacle_id":"$classId","conf":0.92,"image_id":"$label"}}"""
 }

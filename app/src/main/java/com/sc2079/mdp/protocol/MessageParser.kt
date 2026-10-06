@@ -14,19 +14,20 @@ import org.json.JSONObject
  * {"cat":"error","value":"<text>"}                                 status box   (C.4)
  * {"cat":"status","value":"<text>"}                                status box   (C.4)
  * {"cat":"location","value":{"x":<int>,"y":<int>,"d":<heading>}}   robot pose   (C.10)
- * {"cat":"image-rec","value":{"obstacle_id":<int>,"image_id":<id>}} target id   (C.9)
+ * {"cat":"image-rec","value":{"obstacle_id":"20","image_id":"A"}}  target id    (C.9)
  * {"cat":"mode","value":"<mode>"}                                  task mode (optional UI)
  * ```
  *
- * `d` (and `image-rec`'s optional `face`) accepts a heading letter (`N`/`E`/`S`/
- * `W`), this app's own outgoing obstacle-face code (`N=0,E=2,S=4,W=6`), or
- * degrees (`N=0,E=90,S=180,W=270`, matching [Direction.degrees]) - the RPi
- * side of this convention isn't pinned down to one scheme, so whichever the
- * localisation code actually emits is accepted. `image-rec`'s field names
- * (`obstacle_id`/`image_id`) are this app's assumption pending confirmation
- * from the RPi team; `obstacleId`/`id` and `imageId`/`target_id`/`targetId`
- * are accepted as aliases so a naming difference on their end doesn't quietly
- * turn every result into [IncomingMessage.Unknown].
+ * `d` accepts a heading letter (`N`/`E`/`S`/`W`), this app's own outgoing
+ * obstacle-face code (`N=0,E=2,S=4,W=6`), or degrees (`N=0,E=90,S=180,W=270`,
+ * matching [Direction.degrees]) - the RPi side of this convention isn't pinned
+ * down to one scheme, so whichever the localisation code actually emits is
+ * accepted.
+ *
+ * `image-rec` doesn't say which obstacle it's for: the RPi's `obstacle_id`
+ * actually holds the image class ID (11-40). The obstacle number only arrives
+ * in the info message the RPi sends just before it - "Capturing image for
+ * obstacle id: N" - so that's parsed into [IncomingMessage.Status.capturingObstacleId].
  *
  * A line that isn't valid JSON, or whose `cat` isn't one of the above, is never
  * partially parsed - it becomes [IncomingMessage.Unknown] and only shows up in
@@ -57,7 +58,8 @@ object MessageParser {
     private fun parseStatus(json: JSONObject, raw: String): IncomingMessage {
         val text = json.optString("value").trim()
         if (text.isEmpty()) return IncomingMessage.Unknown(raw)
-        return IncomingMessage.Status(text, raw)
+        val capturing = CAPTURING_OBSTACLE.find(text)?.groupValues?.get(1)?.toIntOrNull()
+        return IncomingMessage.Status(text, raw, capturing)
     }
 
     private fun parseLocation(json: JSONObject, raw: String): IncomingMessage {
@@ -72,13 +74,12 @@ object MessageParser {
 
     private fun parseImageRec(json: JSONObject, raw: String): IncomingMessage {
         val value = json.optJSONObject("value") ?: return IncomingMessage.Unknown(raw)
-        val obstacleId = firstInt(value, "obstacle_id", "obstacleId", "id") ?: return IncomingMessage.Unknown(raw)
-        val targetId = firstString(value, "image_id", "imageId", "target_id", "targetId")
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
-            ?: return IncomingMessage.Unknown(raw)
-        val face = value.opt("face")?.let(::headingFrom) ?: value.opt("d")?.let(::headingFrom)
-        return IncomingMessage.TargetUpdate(obstacleId, targetId, face, raw)
+        val label = when (val field = value.opt("image_id")) {
+            is String -> field
+            is Number -> field.toString()
+            else -> null
+        }?.trim()?.takeIf { it.isNotEmpty() } ?: return IncomingMessage.Unknown(raw)
+        return IncomingMessage.ImageRecognised(label, raw)
     }
 
     private fun parseMode(json: JSONObject, raw: String): IncomingMessage {
@@ -102,31 +103,7 @@ object MessageParser {
         else -> null
     }
 
-    private fun firstInt(value: JSONObject, vararg keys: String): Int? =
-        keys.firstNotNullOfOrNull { key ->
-            if (!value.has(key)) return@firstNotNullOfOrNull null
-            when (val field = value.opt(key)) {
-                is Number -> field.toInt()
-                is String -> obstacleNumber(field)
-                else -> null
-            }
-        }
-
-    private fun firstString(value: JSONObject, vararg keys: String): String? =
-        keys.firstNotNullOfOrNull { key ->
-            if (!value.has(key)) return@firstNotNullOfOrNull null
-            when (val field = value.opt(key)) {
-                is String -> field
-                is Number -> field.toString()
-                else -> null
-            }
-        }
-
-    /** Accepts `B2`, `b2` and `2`, returning the obstacle number. */
-    fun obstacleNumber(field: String): Int? {
-        val cleaned = field.trim().removePrefix("B").removePrefix("b")
-        return cleaned.toIntOrNull()
-    }
-
     private const val MISSING_INT = Int.MIN_VALUE
+
+    private val CAPTURING_OBSTACLE = Regex("""obstacle id:\s*(\d+)""", RegexOption.IGNORE_CASE)
 }

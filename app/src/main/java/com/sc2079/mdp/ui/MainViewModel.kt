@@ -107,6 +107,9 @@ class MainViewModel : ViewModel() {
         _log.value = emptyList()
     }
 
+    /** Obstacle the RPi last announced it was capturing; the next image result belongs to it. */
+    private var capturingObstacleId: Int? = null
+
     /**
      * Applies one received line to the map, returning what it was recognised as
      * (the activity only needs this for the raw log, since every visible effect
@@ -124,10 +127,19 @@ class MainViewModel : ViewModel() {
             is IncomingMessage.RobotUpdate ->
                 _arena.value = _arena.value.withRobot(message.x, message.y, message.facing)
 
-            is IncomingMessage.TargetUpdate ->
-                _arena.value = _arena.value.setTargetId(message.obstacleId, message.targetId, message.face)
+            is IncomingMessage.ImageRecognised -> {
+                // Used once: a result with no fresh announcement is dropped rather
+                // than painted onto whichever obstacle was captured last.
+                val obstacleId = capturingObstacleId ?: return message
+                _arena.value = _arena.value.setTargetId(obstacleId, message.targetId)
+                capturingObstacleId = null
+            }
 
-            is IncomingMessage.Status -> setStatus(message.text)
+            is IncomingMessage.Status -> {
+                setStatus(message.text)
+                message.capturingObstacleId?.let { capturingObstacleId = it }
+            }
+
             is IncomingMessage.ModeUpdate -> Unit
             is IncomingMessage.Unknown -> Unit
         }

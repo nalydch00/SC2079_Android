@@ -9,7 +9,7 @@ import com.sc2079.mdp.model.Direction
  * [MessageParser] for the grammar of each `cat`. Every variant keeps the [raw]
  * text so the raw traffic log can show exactly what arrived. Only [Status] may
  * ever update the "Robot status" box (checklist C.4's selective status/update
- * message) - [RobotUpdate] and [TargetUpdate] update the map silently,
+ * message) - [RobotUpdate] and [ImageRecognised] update the map silently,
  * [ModeUpdate] carries no required side effect, and [Unknown] updates nothing.
  */
 sealed class IncomingMessage {
@@ -24,11 +24,16 @@ sealed class IncomingMessage {
         override val raw: String,
     ) : IncomingMessage()
 
-    /** `{"cat":"image-rec","value":{"obstacle_id":..,"image_id":..}}` - checklist C.9. */
-    data class TargetUpdate(
-        val obstacleId: Int,
+    /**
+     * `{"cat":"image-rec","value":{"obstacle_id":"20","image_id":"A",...}}` -
+     * checklist C.9. [targetId] is the recognised image's label (`image_id`).
+     * Despite its name, the RPi's `obstacle_id` holds the image class ID
+     * (11-40), not the obstacle's number, so this message alone can't say which
+     * obstacle it belongs to - that comes from the preceding
+     * [Status.capturingObstacleId].
+     */
+    data class ImageRecognised(
         val targetId: String,
-        val face: Direction?,
         override val raw: String,
     ) : IncomingMessage()
 
@@ -40,6 +45,8 @@ sealed class IncomingMessage {
     data class Status(
         val text: String,
         override val raw: String,
+        /** Set when [text] is the RPi's "Capturing image for obstacle id: N". */
+        val capturingObstacleId: Int? = null,
     ) : IncomingMessage()
 
     /**

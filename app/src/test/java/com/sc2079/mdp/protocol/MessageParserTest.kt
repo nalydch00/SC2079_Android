@@ -47,41 +47,33 @@ class MessageParserTest {
     }
 
     @Test
-    fun `parses an image-rec update`() {
+    fun `an image-rec result carries the image label, not the class id`() {
         val message = MessageParser.parse(
-            """{"cat":"image-rec","value":{"obstacle_id":2,"image_id":"11"}}""",
+            """{"cat":"image-rec","value":{"obstacle_id":"20","conf":0.92,"xyxy":[1.9,1050.6,409.4,1743.3],"image_id":"A"}}""",
         )
-        assertTrue(message is IncomingMessage.TargetUpdate)
-        message as IncomingMessage.TargetUpdate
-        assertEquals(2, message.obstacleId)
-        assertEquals("11", message.targetId)
-        assertNull(message.face)
+        assertTrue(message is IncomingMessage.ImageRecognised)
+        assertEquals("A", (message as IncomingMessage.ImageRecognised).targetId)
     }
 
     @Test
-    fun `parses an image-rec update with a face`() {
-        val message = MessageParser.parse(
-            """{"cat":"image-rec","value":{"obstacle_id":2,"image_id":"11","face":"N"}}""",
-        )
-        message as IncomingMessage.TargetUpdate
-        assertEquals(Direction.NORTH, message.face)
-    }
-
-    @Test
-    fun `accepts alias keys for image-rec`() {
-        val message = MessageParser.parse(
-            """{"cat":"image-rec","value":{"id":"B3","targetId":"7"}}""",
-        )
-        message as IncomingMessage.TargetUpdate
-        assertEquals(3, message.obstacleId)
-        assertEquals("7", message.targetId)
-    }
-
-    @Test
-    fun `rejects an image-rec missing the obstacle id`() {
+    fun `rejects an image-rec missing the image label`() {
         assertTrue(
-            MessageParser.parse("""{"cat":"image-rec","value":{"image_id":"11"}}""") is IncomingMessage.Unknown,
+            MessageParser.parse("""{"cat":"image-rec","value":{"obstacle_id":"20"}}""") is IncomingMessage.Unknown,
         )
+    }
+
+    @Test
+    fun `a capturing announcement carries the obstacle number`() {
+        val message = MessageParser.parse("""{"cat":"info","value":"Capturing image for obstacle id: 3"}""")
+        message as IncomingMessage.Status
+        assertEquals("Capturing image for obstacle id: 3", message.text)
+        assertEquals(3, message.capturingObstacleId)
+    }
+
+    @Test
+    fun `an ordinary status message carries no obstacle number`() {
+        val message = MessageParser.parse("""{"cat":"info","value":"Moving"}""")
+        assertNull((message as IncomingMessage.Status).capturingObstacleId)
     }
 
     @Test
@@ -145,13 +137,5 @@ class MessageParserTest {
     fun `blank lines are not recognised`() {
         assertTrue(MessageParser.parse("") is IncomingMessage.Unknown)
         assertTrue(MessageParser.parse("   ") is IncomingMessage.Unknown)
-    }
-
-    @Test
-    fun `obstacle numbers accept the B prefix`() {
-        assertEquals(4, MessageParser.obstacleNumber("B4"))
-        assertEquals(4, MessageParser.obstacleNumber("b4"))
-        assertEquals(4, MessageParser.obstacleNumber(" 4 "))
-        assertNull(MessageParser.obstacleNumber("north"))
     }
 }
