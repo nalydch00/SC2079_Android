@@ -126,6 +126,31 @@ class MainViewModelTest {
         assertTrue(viewModel.trace.value.isEmpty())
     }
 
+    @Test
+    fun `reset run keeps obstacles but wipes results, the trace and the robot pose`() {
+        val viewModel = MainViewModel()
+        viewModel.addObstacle(5, 5)
+        viewModel.applyIncoming(capturing(1))
+        viewModel.applyIncoming(imageRec(classId = "20", label = "A"))
+        viewModel.applyIncoming(location(4, 5, 2))
+        viewModel.resetRun()
+        val obstacle = viewModel.arena.value.obstacleById(1)
+        assertEquals(5, obstacle?.x)
+        assertNull(obstacle?.targetId)
+        assertEquals(Robot(1, 1, Direction.NORTH), viewModel.arena.value.robot)
+        assertTrue(viewModel.trace.value.isEmpty())
+    }
+
+    @Test
+    fun `a capture announced before a reset doesn't claim a result after it`() {
+        val viewModel = MainViewModel()
+        viewModel.addObstacle(5, 5)
+        viewModel.applyIncoming(capturing(1))
+        viewModel.resetRun()
+        viewModel.applyIncoming(imageRec(classId = "20", label = "A"))
+        assertNull(viewModel.arena.value.obstacleById(1)?.targetId)
+    }
+
     private fun location(x: Int, y: Int, d: Int) =
         """{"cat":"location","value":{"x":$x,"y":$y,"d":$d}}"""
 

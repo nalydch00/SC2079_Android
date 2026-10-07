@@ -102,4 +102,16 @@ class ArenaTest {
         assertTrue(cleared.obstacles.isEmpty())
         assertEquals(Robot(1, 1, Direction.NORTH), cleared.robot)
     }
+
+    @Test
+    fun `resetting a run keeps obstacles and faces but forgets image results and the robot pose`() {
+        val (placed, obstacle) = Arena().addObstacle(5, 5)!!
+        val afterRun = placed
+            .setTargetFace(obstacle.id, Direction.EAST)
+            .setTargetId(obstacle.id, "A")
+            .withRobot(12, 9, Direction.SOUTH)
+        val reset = afterRun.resetForNewRun()
+        assertEquals(Obstacle(obstacle.id, 5, 5, targetFace = Direction.EAST, targetId = null), reset.obstacles.single())
+        assertEquals(Robot(1, 1, Direction.NORTH), reset.robot)
+    }
 }

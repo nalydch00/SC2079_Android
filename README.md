@@ -30,15 +30,20 @@ each step:
    - **Control** — robot status plus the movement D-pad; what you touch while
      actually driving.
    - **Obstacles** — target-face annotation plus map-wide actions (Send all,
-     Clear map, …); used while setting the arena up. **Clear map** also puts the
-     robot back at the start (bottom-left corner, facing north) and wipes the
-     trace.
+     Reset run, Clear map, …); used while setting the arena up. **Reset run**
+     keeps every obstacle where it is (and its annotated face) but turns them
+     back from green to blue, wipes the trace, and puts the robot back at the
+     start (bottom-left corner, facing north) - for re-running the same layout.
+     **Clear map** does the same but also removes the obstacles.
    - **Log** — free-text send plus the raw traffic log; for proving connectivity
      with the AMD tool.
-   - **Trace** — every position the robot reported over the link (`location`
-     messages), numbered in order with x, y and facing. The same points are
-     joined by a purple line on the map. Positions you set by dragging the robot
-     yourself aren't recorded.
+   - **Trace** — a plain-text report of the run: the arena's coordinate
+     conventions, every obstacle (position, face, image read), then every
+     position the robot reported over the link (`location` messages), numbered
+     in order with x, y and facing. **Copy** puts the whole report on the
+     clipboard, ready to paste into a chatbot to check the algorithm's path.
+     The same points are joined by a purple line on the map. Positions you set
+     by dragging the robot yourself aren't recorded.
 
    The arena map itself is not part of the panel and stays visible regardless
    of which tab is selected.

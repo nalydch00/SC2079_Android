@@ -1,6 +1,9 @@
 package com.sc2079.mdp.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -104,6 +107,9 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
 
     private fun wireArenaActions() = with(binding.controls) {
         btnSendMap.setOnClickListener { transmitObstacles() }
+        // Image results aren't part of the obstacles message, so the RPi's copy
+        // of the map is unchanged and there's nothing to resend.
+        btnResetRun.setOnClickListener { viewModel.resetRun() }
         btnClearMap.setOnClickListener {
             viewModel.clearArena()
             transmitObstacles()
@@ -137,6 +143,15 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
         inputMessage.doAfterTextChanged { btnSendText.isEnabled = !it.isNullOrBlank() }
         btnSendText.isEnabled = false
         btnClearLog.setOnClickListener { viewModel.clearLog() }
+        btnCopyTrace.setOnClickListener { copyTrace() }
+    }
+
+    private fun copyTrace() {
+        val report = TraceReport.format(viewModel.arena.value, viewModel.trace.value)
+        getSystemService(ClipboardManager::class.java)
+            .setPrimaryClip(ClipData.newPlainText(getString(R.string.section_trace), report))
+        // Android 13+ shows its own confirmation whenever something is copied.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) toast(getString(R.string.trace_copied))
     }
 
     private fun sendTypedMessage() {
@@ -173,6 +188,7 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
             arena.robot.facing.code,
         )
         renderSelection()
+        renderTraceReport()
     }
 
     private fun renderSelection() {
@@ -198,17 +214,14 @@ class ControlActivity : AppCompatActivity(), ArenaView.Listener {
 
     private fun renderTrace(trace: List<Robot>) {
         binding.arenaView.trace = trace
-        val controls = binding.controls
-        controls.traceText.text = if (trace.isEmpty()) {
-            getString(R.string.trace_empty)
-        } else {
-            val rows = trace.mapIndexed { index, pose ->
-                "${(index + 1).toString().padStart(3)}  ${pose.x.toString().padStart(3)}  " +
-                    "${pose.y.toString().padStart(3)}    ${pose.facing.code}"
-            }
-            (listOf(getString(R.string.trace_header)) + rows).joinToString("\n")
-        }
-        controls.traceScroll.post { controls.traceScroll.fullScroll(View.FOCUS_DOWN) }
+        renderTraceReport()
+        val scroll = binding.controls.traceScroll
+        scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
+    }
+
+    /** Also re-run on every map change, since the report lists the obstacles too. */
+    private fun renderTraceReport() {
+        binding.controls.traceText.text = TraceReport.format(viewModel.arena.value, viewModel.trace.value)
     }
 
     /**

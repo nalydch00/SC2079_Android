@@ -93,6 +93,15 @@ class MainViewModel : ViewModel() {
         _arena.value = _arena.value.cleared()
         _selectedObstacleId.value = null
         _trace.value = emptyList()
+        capturingObstacleId = null
+        setStatus(DEFAULT_STATUS)
+    }
+
+    /** Keeps the obstacles where they are but wipes everything the last run left behind. */
+    fun resetRun() {
+        _arena.value = _arena.value.resetForNewRun()
+        _trace.value = emptyList()
+        capturingObstacleId = null
         setStatus(DEFAULT_STATUS)
     }
 
@@ -100,6 +109,7 @@ class MainViewModel : ViewModel() {
         _arena.value = Arena(columns = columns, rows = rows)
         _selectedObstacleId.value = null
         _trace.value = emptyList()
+        capturingObstacleId = null
     }
 
     fun setStatus(text: String) {

@@ -77,6 +77,14 @@ data class Arena(
     /** Empties the map and puts the robot back at [START_ROBOT]. */
     fun cleared(): Arena = copy(obstacles = emptyList(), robot = START_ROBOT)
 
+    /**
+     * Readies the same layout for another run: obstacles keep their positions
+     * and annotated faces, but every image result is forgotten and the robot
+     * goes back to [START_ROBOT].
+     */
+    fun resetForNewRun(): Arena =
+        copy(obstacles = obstacles.map { it.copy(targetId = null) }, robot = START_ROBOT)
+
     private fun replace(obstacle: Obstacle): Arena =
         copy(obstacles = obstacles.map { if (it.id == obstacle.id) obstacle else it })
 

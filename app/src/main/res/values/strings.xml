@@ -14,8 +14,8 @@
     <string name="tab_log">Log</string>
     <string name="tab_trace">Trace</string>
     <string name="section_trace">Robot trace</string>
-    <string name="trace_empty">No moves yet. Positions appear here as the robot reports them.</string>
-    <string name="trace_header">"  #    x    y  facing"</string>
+    <string name="copy">Copy</string>
+    <string name="trace_copied">Trace copied</string>
 
     <string name="connect">Connect</string>
     <string name="listen">Reconnect</string>
@@ -65,6 +65,7 @@
 
     <string name="send_map">Send all</string>
     <string name="clear_map">Clear map</string>
+    <string name="reset_run">Reset run</string>
     <string name="start_image">Image rec.</string>
     <string name="start_fastest">Fastest path</string>
     <string name="message_hint">Text to send</string>

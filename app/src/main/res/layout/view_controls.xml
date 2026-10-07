@@ -307,6 +307,14 @@
                     android:text="@string/send_map" />
 
                 <Button
+                    android:id="@+id/btn_reset_run"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
+                    android:text="@string/reset_run" />
+
+                <Button
                     android:id="@+id/btn_clear_map"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -423,10 +431,26 @@
             android:padding="20dp"
             android:visibility="gone">
 
-            <TextView
-                style="@style/SectionHeader"
-                android:layout_marginTop="0dp"
-                android:text="@string/section_trace" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/SectionHeader"
+                    android:layout_width="0dp"
+                    android:layout_marginTop="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/section_trace" />
+
+                <Button
+                    android:id="@+id/btn_copy_trace"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/copy" />
+            </LinearLayout>
 
             <ScrollView
                 android:id="@+id/trace_scroll"
@@ -441,7 +465,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="monospace"
                     android:padding="8dp"
-                    android:text="@string/trace_empty"
+                    android:textIsSelectable="true"
                     android:textSize="12sp" />
             </ScrollView>
         </LinearLayout>
