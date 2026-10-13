@@ -9,3 +9,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# BC3415 notebook: large or regenerable files
+__pycache__/
+.ipynb_checkpoints/
+outputs/data/reviews_clean.parquet
+outputs/models/*.pt
