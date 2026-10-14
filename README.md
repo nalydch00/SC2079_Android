@@ -205,6 +205,47 @@ run.
    (`RECONNECTING…`) and the app stays responsive; connect again from the tool
    and the link comes back on its own.
 
+## Simulating the robot from a laptop (USB)
+
+No robot or Bluetooth needed: debug builds include a receiver that lets a
+laptop, plugged into the tablet over USB, play the RPi's side of the link.
+Release builds don't contain it.
+
+1. Turn on USB debugging on the tablet, plug it in, and run the app from
+   Android Studio (the **debug** build, which is the default). Leave it open on
+   the Connect screen.
+2. In a terminal on the laptop:
+
+   ```
+   cd tools/simulator
+   ./sim.sh connect          # the app jumps to the map, "connected" to "Simulated RPi"
+   ```
+
+3. Place a few obstacles on the map, then either replay a whole made-up run
+   (`sample_run.jsonl`, which identifies obstacles 1-3) or send one step at a
+   time:
+
+   ```
+   ./sim.sh run              # connect + replay sample_run.jsonl
+   ./sim.sh move 1 5 N       # robot now at (1, 5) facing north
+   ./sim.sh see 2 A          # "Capturing image for obstacle id: 2", then an image-rec for A
+   ./sim.sh status "Looking for target 3"
+   ./sim.sh send '{"cat":"mode","value":"1"}'   # any raw RPi line
+   ./sim.sh replay my_run.jsonl                 # your own file, one line each
+   ./sim.sh drop             # toolbar shows Reconnecting...; ./sim.sh connect brings it back
+   ```
+
+4. What the app sends (Send map, Start, movement buttons) doesn't go over
+   Bluetooth while simulated - watch it with `adb logcat -s MdpSimulator`.
+
+`sim.sh` finds `adb` on the `PATH` or in Android Studio's default SDK folder
+(`~/Library/Android/sdk/platform-tools`); set `ADB=/path/to/adb` otherwise.
+`SIM_DELAY` sets the pause between replayed lines (default 0.7 s).
+
+This tests everything after the link: the map, the trace and how image
+results land on obstacles. It doesn't test the Bluetooth link itself - use the
+AMD tool or the RPi for that.
+
 ## Project layout
 
 ```
@@ -214,6 +255,8 @@ app/src/main/java/com/sc2079/mdp/
 ├── protocol/     Message parsing and formatting — pure Kotlin, unit tested
 ├── ui/           ConnectionActivity, ControlActivity, MainViewModel, ArenaView, dialogs
 └── util/         Runtime permissions, SharedPreferences
+app/src/debug/    SimulatorReceiver (debug builds only)
+tools/simulator/  sim.sh and sample_run.jsonl for driving it over adb
 ```
 
 The `model` and `protocol` packages deliberately avoid Android types so the

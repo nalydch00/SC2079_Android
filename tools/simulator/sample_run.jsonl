@@ -1,0 +1,27 @@
+# A made-up image recognition run, replayed by ./sim.sh run.
+# Place at least 3 obstacles on the map first so ids 1-3 exist; the path
+# below won't match where you put them, it only exercises the map and trace.
+# Edit freely: one RPi message per line, blank lines and # lines are skipped.
+{"cat":"info","value":"Robot is ready to move."}
+{"cat":"status","value":"running"}
+{"cat":"location","value":{"x":1,"y":2,"d":0}}
+{"cat":"location","value":{"x":1,"y":4,"d":0}}
+{"cat":"location","value":{"x":1,"y":6,"d":0}}
+{"cat":"location","value":{"x":3,"y":8,"d":2}}
+{"cat":"location","value":{"x":5,"y":8,"d":2}}
+{"cat":"info","value":"Capturing image for obstacle id: 1"}
+{"cat":"image-rec","value":{"obstacle_id":"20","conf":0.93,"xyxy":[118,74,262,236],"image_id":"A"}}
+{"cat":"location","value":{"x":7,"y":8,"d":2}}
+{"cat":"location","value":{"x":9,"y":10,"d":0}}
+{"cat":"location","value":{"x":9,"y":12,"d":0}}
+{"cat":"location","value":{"x":9,"y":14,"d":0}}
+{"cat":"info","value":"Capturing image for obstacle id: 2"}
+{"cat":"image-rec","value":{"obstacle_id":"17","conf":0.88,"xyxy":[130,90,250,230],"image_id":"7"}}
+{"cat":"location","value":{"x":11,"y":16,"d":2}}
+{"cat":"location","value":{"x":13,"y":16,"d":2}}
+{"cat":"location","value":{"x":15,"y":14,"d":4}}
+{"cat":"location","value":{"x":15,"y":12,"d":4}}
+{"cat":"info","value":"Capturing image for obstacle id: 3"}
+{"cat":"image-rec","value":{"obstacle_id":"22","conf":0.9,"xyxy":[125,85,255,235],"image_id":"C"}}
+{"cat":"location","value":{"x":15,"y":10,"d":4}}
+{"cat":"status","value":"finished"}

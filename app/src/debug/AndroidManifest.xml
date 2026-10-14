@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: lets a laptop on USB stand in for the robot via adb
+     (see tools/simulator). DUMP is held by the adb shell but never granted to
+     ordinary apps, so nothing else on the tablet can drive this receiver. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <receiver
+            android:name=".debug.SimulatorReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP" />
+    </application>
+</manifest>

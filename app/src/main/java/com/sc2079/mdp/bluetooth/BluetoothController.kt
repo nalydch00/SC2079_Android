@@ -79,6 +79,10 @@ class BluetoothController private constructor(context: Context) {
     @Volatile
     private var keepAlive = false
 
+    /** True while the debug-build simulator stands in for the robot. */
+    @Volatile
+    private var simulated = false
+
     val isBluetoothSupported: Boolean get() = adapter != null
 
     val isBluetoothEnabled: Boolean get() = adapter?.isEnabled == true
@@ -104,6 +108,7 @@ class BluetoothController private constructor(context: Context) {
         }
         runCatching { adapter.cancelDiscovery() }
         synchronized(lock) {
+            simulated = false
             keepAlive = true
             lastDevice = device
             _remoteName.value = deviceLabel(device)
@@ -135,6 +140,7 @@ class BluetoothController private constructor(context: Context) {
     /** Tears the link down and stops every retry. */
     fun disconnect() {
         synchronized(lock) {
+            simulated = false
             keepAlive = false
             clientThread?.cancel()
             clientThread = null
@@ -154,6 +160,10 @@ class BluetoothController private constructor(context: Context) {
      * mid-flight is reported through [events].
      */
     fun send(text: String): Boolean {
+        if (simulated) {
+            Log.i(SIMULATOR_TAG, "sent: $text")
+            return true
+        }
         val thread = synchronized(lock) { connectedThread }
         if (thread == null) {
             emitEvent("Not connected - \"$text\" was not sent")
@@ -161,6 +171,42 @@ class BluetoothController private constructor(context: Context) {
         }
         writeExecutor.execute { thread.write(text + "\n") }
         return true
+    }
+
+    // ------------------------------------------------------------ simulator
+    // Only the debug build's SimulatorReceiver calls these, so a laptop on USB
+    // can stand in for the robot (see tools/simulator).
+
+    /**
+     * Pretends a link to [name] just came up, without touching the radio.
+     * While simulated, [send] logs to logcat under [SIMULATOR_TAG] instead.
+     */
+    fun simulateConnection(name: String) {
+        synchronized(lock) {
+            keepAlive = false
+            clientThread?.cancel()
+            clientThread = null
+            serverThread?.cancel()
+            serverThread = null
+            closeConnection(notify = false)
+            simulated = true
+            _remoteName.value = name
+        }
+        setState(ConnectionState.CONNECTED)
+        emitEvent("Connected to $name (simulated)")
+    }
+
+    /** Pretends the simulated link dropped; sends fail until it comes back. */
+    fun simulateLinkLoss() {
+        if (!simulated) return
+        simulated = false
+        setState(ConnectionState.RECONNECTING)
+        emitEvent("Link lost - reconnecting")
+    }
+
+    /** Delivers [line] as if the robot had just sent it. */
+    fun simulateIncoming(line: String) {
+        if (line.isNotBlank()) _incoming.tryEmit(line.trim())
     }
 
     private fun ensureServerLocked() {
@@ -428,6 +474,9 @@ class BluetoothController private constructor(context: Context) {
 
     companion object {
         private const val TAG = "MdpBluetooth"
+
+        /** Logcat tag for what the app sends while simulated. */
+        const val SIMULATOR_TAG = "MdpSimulator"
         private const val SERVICE_NAME = "MDP-ARCM"
         private const val RETRY_DELAY_MS = 3_000L
         private const val POLL_MS = 500L
