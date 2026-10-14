@@ -20,6 +20,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 COMPONENT="com.sc2079.mdp/.debug.SimulatorReceiver"
 DELAY="${SIM_DELAY:-0.7}"
+DEFAULT_NAME="MDP-Group6-RPi"
 
 find_adb() {
     if [[ -n "${ADB:-}" ]]; then echo "$ADB"; return; fi
@@ -39,6 +40,12 @@ broadcast() {
         echo "$out" >&2
         exit 1
     fi
+}
+
+connect() {
+    # adb shell re-splits arguments on spaces, so quote the name for the tablet's shell.
+    broadcast --es cmd connect --es name "'${1//\'/}'"
+    echo "-- connected to $1 (simulated)"
 }
 
 receive() {
@@ -92,8 +99,7 @@ cmd="${1:-}"
 [[ $# -gt 0 ]] && shift
 case "$cmd" in
     connect)
-        broadcast --es cmd connect --es name "${1:-Simulated RPi}"
-        echo "-- connected (simulated)"
+        connect "${1:-$DEFAULT_NAME}"
         ;;
     drop)
         broadcast --es cmd drop
@@ -128,8 +134,7 @@ case "$cmd" in
         replay "$1"
         ;;
     run)
-        broadcast --es cmd connect --es name "Simulated RPi"
-        echo "-- connected (simulated)"
+        connect "$DEFAULT_NAME"
         sleep 2
         replay "$HERE/sample_run.jsonl"
         ;;

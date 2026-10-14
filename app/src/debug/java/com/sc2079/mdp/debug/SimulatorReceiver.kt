@@ -44,6 +44,6 @@ class SimulatorReceiver : BroadcastReceiver() {
         const val EXTRA_CMD = "cmd"
         const val EXTRA_NAME = "name"
         const val EXTRA_DATA = "data"
-        const val DEFAULT_NAME = "Simulated RPi"
+        const val DEFAULT_NAME = "MDP-Group6-RPi"
     }
 }

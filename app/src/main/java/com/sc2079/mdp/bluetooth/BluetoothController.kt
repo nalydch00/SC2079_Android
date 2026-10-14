@@ -193,7 +193,7 @@ class BluetoothController private constructor(context: Context) {
             _remoteName.value = name
         }
         setState(ConnectionState.CONNECTED)
-        emitEvent("Connected to $name (simulated)")
+        emitEvent("Connected to $name")
     }
 
     /** Pretends the simulated link dropped; sends fail until it comes back. */

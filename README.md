@@ -218,7 +218,7 @@ Release builds don't contain it.
 
    ```
    cd tools/simulator
-   ./sim.sh connect          # the app jumps to the map, "connected" to "Simulated RPi"
+   ./sim.sh connect          # the app jumps to the map, connected to "MDP-Group6-RPi"
    ```
 
 3. Place a few obstacles on the map, then either replay a whole made-up run
