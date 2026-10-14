@@ -1,0 +1,69 @@
+# 8-obstacle image recognition run for ./sim.sh replay (SIM_DELAY=0.3 gives ~30-35 s).
+# Before replaying, tap Clear map and place these, setting each face with N/E/S/W:
+#   obstacle 1: (5, 12) face S  -> reads 1
+#   obstacle 2: (2, 17) face E  -> reads B
+#   obstacle 3: (11, 17) face S  -> reads 5
+#   obstacle 4: (16, 15) face W  -> reads D
+#   obstacle 5: (17, 6) face N  -> reads 8
+#   obstacle 6: (12, 3) face W  -> reads F
+#   obstacle 7: (9, 8) face E  -> reads 2
+#   obstacle 8: (6, 4) face N  -> reads S
+# Shortest route found by a planner using 1-cell straights and 3x3-cell 90-degree
+# turns (forward or reverse), never letting the 3x3 robot touch an obstacle or wall.
+{"cat":"status","value":"running"}
+# to obstacle 1
+{"cat":"location","value":{"x":1,"y":2,"d":0}}
+{"cat":"location","value":{"x":4,"y":5,"d":2}}
+{"cat":"location","value":{"x":3,"y":5,"d":2}}
+{"cat":"location","value":{"x":2,"y":5,"d":2}}
+{"cat":"location","value":{"x":1,"y":5,"d":2}}
+{"cat":"location","value":{"x":4,"y":8,"d":0}}
+{"cat":"info","value":"Capturing image for obstacle id: 1"}
+{"cat":"image-rec","value":{"obstacle_id":"11","conf":0.91,"xyxy":[120,80,260,240],"image_id":"1"}}
+# to obstacle 8
+{"cat":"location","value":{"x":4,"y":7,"d":0}}
+{"cat":"location","value":{"x":7,"y":10,"d":2}}
+{"cat":"location","value":{"x":6,"y":10,"d":2}}
+{"cat":"location","value":{"x":5,"y":10,"d":2}}
+{"cat":"location","value":{"x":4,"y":10,"d":2}}
+{"cat":"location","value":{"x":7,"y":7,"d":4}}
+{"cat":"info","value":"Capturing image for obstacle id: 8"}
+{"cat":"image-rec","value":{"obstacle_id":"28","conf":0.91,"xyxy":[120,80,260,240],"image_id":"S"}}
+# to obstacle 6
+{"cat":"location","value":{"x":10,"y":4,"d":2}}
+{"cat":"location","value":{"x":9,"y":4,"d":2}}
+{"cat":"info","value":"Capturing image for obstacle id: 6"}
+{"cat":"image-rec","value":{"obstacle_id":"25","conf":0.91,"xyxy":[120,80,260,240],"image_id":"F"}}
+# to obstacle 4
+{"cat":"location","value":{"x":8,"y":4,"d":2}}
+{"cat":"location","value":{"x":11,"y":7,"d":0}}
+{"cat":"location","value":{"x":11,"y":8,"d":0}}
+{"cat":"location","value":{"x":11,"y":9,"d":0}}
+{"cat":"location","value":{"x":11,"y":10,"d":0}}
+{"cat":"location","value":{"x":11,"y":11,"d":0}}
+{"cat":"location","value":{"x":14,"y":14,"d":2}}
+{"cat":"location","value":{"x":13,"y":14,"d":2}}
+{"cat":"info","value":"Capturing image for obstacle id: 4"}
+{"cat":"image-rec","value":{"obstacle_id":"23","conf":0.91,"xyxy":[120,80,260,240],"image_id":"D"}}
+# to obstacle 5
+{"cat":"location","value":{"x":16,"y":11,"d":4}}
+{"cat":"location","value":{"x":16,"y":10,"d":4}}
+{"cat":"info","value":"Capturing image for obstacle id: 5"}
+{"cat":"image-rec","value":{"obstacle_id":"18","conf":0.91,"xyxy":[120,80,260,240],"image_id":"8"}}
+# to obstacle 7
+{"cat":"location","value":{"x":16,"y":11,"d":4}}
+{"cat":"location","value":{"x":13,"y":8,"d":6}}
+{"cat":"info","value":"Capturing image for obstacle id: 7"}
+{"cat":"image-rec","value":{"obstacle_id":"12","conf":0.91,"xyxy":[120,80,260,240],"image_id":"2"}}
+# to obstacle 3
+{"cat":"location","value":{"x":10,"y":11,"d":0}}
+{"cat":"location","value":{"x":10,"y":12,"d":0}}
+{"cat":"location","value":{"x":10,"y":13,"d":0}}
+{"cat":"info","value":"Capturing image for obstacle id: 3"}
+{"cat":"image-rec","value":{"obstacle_id":"15","conf":0.91,"xyxy":[120,80,260,240],"image_id":"5"}}
+# to obstacle 2
+{"cat":"location","value":{"x":7,"y":16,"d":6}}
+{"cat":"location","value":{"x":6,"y":16,"d":6}}
+{"cat":"info","value":"Capturing image for obstacle id: 2"}
+{"cat":"image-rec","value":{"obstacle_id":"21","conf":0.91,"xyxy":[120,80,260,240],"image_id":"B"}}
+{"cat":"status","value":"finished"}

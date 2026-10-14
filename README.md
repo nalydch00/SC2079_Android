@@ -232,6 +232,7 @@ Release builds don't contain it.
    ./sim.sh status "Looking for target 3"
    ./sim.sh send '{"cat":"mode","value":"1"}'   # any raw RPi line
    ./sim.sh replay my_run.jsonl                 # your own file, one line each
+   SIM_DELAY=0.3 ./sim.sh replay eight_obstacles.jsonl   # 8-obstacle run; layout in the file's header
    ./sim.sh drop             # toolbar shows Reconnecting...; ./sim.sh connect brings it back
    ```
 
